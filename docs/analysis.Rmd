@@ -1,0 +1,261 @@
+---
+title: Larval settlement competency
+author: Murray Logan
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    collapse: yes
+    df_print: paged
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+    css: style.css
+output_dir: "docs"
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+assignInNamespace('.sep.label',  "^\\ *(#|--)+\\s*(@knitr|----+)(.*?)-*\\s*$", ns='knitr')
+tidyverse_style_with_comments_removed <- function() {
+  remove_comments <- function(pd) {
+    is_comment <- pd$token == "COMMENT"
+    pd <- pd[!is_comment,]
+    pd
+  }
+  
+  tidyverse_with_comments_removed <- styler::tidyverse_style()
+  tidyverse_with_comments_removed$token$remove_comments <- remove_comments
+  tidyverse_with_comments_removed
+}
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,cache.lazy = FALSE, tidy='styler',
+                      tidy.opts=list(transformers = tidyverse_style_with_comments_removed()))
+options(tinytex.engine = 'xelatex')
+
+## knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,cache.lazy = FALSE, tidy='styler')
+## knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, cache = FALSE)
+knitr::read_chunk("../scripts/functions.R") 
+knitr::read_chunk("../scripts/00_main.R") 
+knitr::read_chunk("../scripts/10_processData.R") 
+knitr::read_chunk("../scripts/20_fitModels.R") 
+knitr::read_chunk("../scripts/30_modelValidations.R") 
+knitr::read_chunk("../scripts/40_summariseModels.R") 
+```
+
+# Info
+# Preparations {.tabset .tabset-faded}
+
+
+## Load the packages
+
+```{r paths, results='markdown', eval=TRUE}
+```
+
+```{r loadPackages, results='markdown', eval=TRUE}
+```
+
+## Load the data
+
+```{r readData, results='markdown', eval=TRUE}
+```
+
+## Process the data
+
+We collectively decided that when Larval age is 0, it is physically
+impossible for the larvae to settle, and therefore even though it is
+not actually measured, we will set the number of settled larvae to be
+0 at this age.  Although there has been an attempt to do this is the
+dataset, it needs to be done at the Plate level for each Species and
+SpecificTreatment.  Therefore I will remove the current attempt and
+add a more complete version.
+
+```{r processData, results='markdown', eval=TRUE}
+```
+
+## EDA
+
+```{r EDA, results='markdown', eval = FALSE}
+```
+
+![](../output/figures/EDA.png)
+
+# Question 1: time to settlement {.tabset .tabset-faded}
+
+The aim of this analysis is to explore the time (age) to settlement
+competency associated with different inducers.  To do so, it is
+necessary to define settlement competency.  There are numerous
+options:
+
+- extract the first time (=age) that any larvae were observed to have
+  settled in any replicate of an inducement treatment.  This approach
+  assumes that any observed settlement represents the biological
+  potential for settlement.  However, it does not necessarily reflect
+  the typical behavioural responses to the inducer.
+
+- set a (series) of thresholds on the proportion of larvae that have
+  settled in each sampling unit above which, the larval within the
+  unit is considered to have demonstrated settlement.  Proportions to
+  explore include 0.1, 0.3, and 0.5, representing 10, 30 and 50%
+  respectively.  This approach focusses on the combination of
+  biological potential for settlement and behavioural response.
+
+In the case of the later, each sampling unit was scored as either 1
+(when the proportion of settled larve exceed the threshold proportion
+or have done so at an earlier age) or 0 (when the proportion of
+settled larvae have yet to exceed the threshold proportion).
+
+## Preparation
+
+1. Set thresholds
+
+```{r setThresholds, results='markdown', eval=TRUE, tidy = TRUE}
+```
+  
+2. Data preparation
+
+	Prepare the data
+
+	1. Score an observation as either 1 (proportion settled greater than
+		threshold) or 0 (not greater)
+
+	2. For each species, treatment and plate
+		- sort by Larval age
+		- score settlement as 1 (has currently or previously obtained a
+		settlement proportion greater than the threshold) or 0 (has
+		not)
+
+	3. Establish analysis nesting (on Species)
+
+	4. Remove the peptile and extract inducment treatments
+       (A.N. suggestion) as arguably these two inducers do not
+       represent natural conditions
+
+```{r prepareDataQ1, results='markdown', eval=FALSE}
+```
+
+## EDA {.tabset .tabset-pills}
+
+```{r EDAQ1, results='markdown', eval=FALSE, echo = TRUE}
+```
+ 
+```{r load data Q1, results='asis', eval=TRUE, echo=FALSE}
+load(paste0(DATA_PATH, "processed/data.q1.RData"))
+SPECIES <- data.q1 %>% pull(Species) %>% unique()
+
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+        cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
+        cat(paste0("![](../output/figures/eda_",SPECIES[i],"__",thresholdProp,"_.png) \n\n"))
+    }
+}
+```
+
+
+## Fit model
+
+The relationships between larval settlement and the interaction of
+larval age and inducement treatment was explored by hierarchical
+logistic models (@Gelman-2007-2007) in a Bayesian framework.
+
+Each Bayesian 
+
+```{r fitModelQ1, results='markdown', eval=FALSE}
+```
+
+```{r load modelled Q1, results='asis', eval=TRUE}
+load(paste0(DATA_PATH, "modelled/data.q1.mod.RData"))
+SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
+```
+    
+## Diagnostics {.tabset .tabset-pills}
+
+```{r MCMCdiagnosticsQ1, results='markdown', eval=FALSE}
+```
+
+```{r MCMCplots modelled Q1, results='asis', eval=TRUE, echo = FALSE}
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+        cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
+        cat(paste0("![](../output/figures/Trace_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+        cat(paste0("![](../output/figures/AC_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+        cat(paste0("![](../output/figures/Rhat_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+        cat(paste0("![](../output/figures/ess_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+        cat(paste0("![](../output/figures/DHARMa_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+    }
+}
+```
+
+## Partial plots {.tabset .tabset-pills}
+
+```{r PartialPlotQ1, results='markdown', eval=FALSE}
+```
+
+```{r PartialPlots  Q1, results='asis', eval=TRUE, echo = FALSE}
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+        cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
+        cat(paste0("![](../output/figures/PartialPlot_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
+    }
+}
+```
+
+## LD50 {.tabset .tabset-pills}
+
+```{r LD50Q1, results='markdown', eval=FALSE}
+```
+
+```{r LD50Tables  Q1, results='asis', eval=TRUE, echo = FALSE}
+files <- list.files(path = paste0(DATA_PATH, "modelled"),
+                    pattern = "data.q1.*mod_sum.RData",
+                    full.names = TRUE)
+load(files[1])
+SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+        cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
+        load(paste0(DATA_PATH, "modelled/data.q1__",thresholdProp,".mod_sum.RData"))
+        print(data.q1.mod[i,'LD50tab'][[1]][[1]] %>%
+              knitr::kable(caption = "Estimated larval age (95% CI) at which larval cohort are considered more likely to have settled than not settled per inducer treatment."))
+        cat('\n')
+        print(data.q1.mod[i,'LD50dif'][[1]][[1]] %>%
+              knitr::kable(caption = "Pairwise comparisons of estimated larval age at which larval cohorts are considered more likely to have settled than not settled between inducer treatments. Exceedence probabilities of effects greater than and less than 0 also provided."))
+        cat('\n')
+    }
+}
+```
+ 
+## Odds ratios {.tabset .tabset-pills}
+
+```{r oddsQ1, results='markdown', eval=FALSE}
+```
+
+```{r oddsTables  Q1, results='asis', eval=TRUE, echo = FALSE}
+files <- list.files(path = paste0(DATA_PATH, "modelled"),
+                    pattern = "data.q1.*mod_sum.RData",
+                    full.names = TRUE)
+load(files[1])
+SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+        cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
+        load(paste0(DATA_PATH, "modelled/data.q1__",thresholdProp,".mod_sum.RData"))
+        print(data.q1.mod[i,'Oddstab'][[1]][[1]] %>%
+              knitr::kable(caption = "Estimated rate of change in above threshold cohort settlement probability per unit of larval age change (odds ratio scale) per inducer treatment."))
+        cat('\n')
+        print(data.q1.mod[i,'Oddsdif'][[1]][[1]] %>%
+              knitr::kable(caption = "Pairwise comparisons of estimated odds of above threshold cohort settlement between inducer treatments. Exceedence probabilities of effects greater than and less than 0 also provided."))
+        cat('\n')
+    }
+}
+```
+  

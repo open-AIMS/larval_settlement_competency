@@ -1,0 +1,111 @@
+td,th {
+	padding-right:5pt;
+}
+.table-condensed {
+    display: block;
+	max-width: 100%;
+	width: auto;
+}
+.table-condensed thead {
+    background-color: white;
+    color: 2pt solid black;
+    font-weight: normal;
+    padding: 20px 30px;
+    text-align: center;
+	border-top: 1.5pt solid #000000;
+	border-bottom: 1pt solid #000000;
+}
+.table-condensed tbody {
+    //background-color: rgb(238, 238, 238);
+    color: rgb(111,111,111);
+    padding: 20px 30px;
+	border-bottom: 1.5pt solid black;
+}
+.table-condensed tbody tr:hover {
+    background: #e0edf9;
+}     
+.table-condensed>tbody>tr>td {
+	border-top: 0px;
+}
+.table-condensed>thead>tr>th {
+	border-bottom: 0px;
+}
+
+.pagedtable .table-condensed {
+	width: 100%;
+	display: table;
+}
+
+.pagedtable .table-condensed thead {
+	color: rgb(102, 102, 102);
+	border-top: 0px;
+	border-bottom: 0px;
+	//background-color: #446e9b;
+}
+.pagedtable .table-condensed tbody {
+    color: rgb(111,111,111);
+    padding: 20px 30px;
+	border-bottom: 0px;
+}
+
+/*Two tone blue*/
+table.rmdtable  {font-size:50%;background:#e8f1f6;text-align:left;border:0;border-spacing:0;}
+table.rmdtable th {display:table-header;color:white;font-size:1em;font-weight: bold; border:1.0pt solid rgb(0,0,127);padding:3.6pt 5pt;background:rgb(0,120,230) none repeat scroll 0% 50%;}
+table.rmdtable td {font-size:0.8em;padding:3pt;border-left: 1.0pt solid rgb(0,0,127);border-right: 1.0pt solid rgb(0,0,127);border-bottom: 1.0pt solid rgb(0,0,127)}
+table.rmdtable ul {
+    /* margin-left: unset !important; */
+    margin-left: 1.5em;
+    line-height: 1.2em;
+}  
+table.rmdtable ul li {
+    padding: 0em;
+}
+
+table.rmdtable ul li::marker {
+    vertical-align: top;
+    content: "-";
+    font-family:VeteranTypewriter ;
+    font-size: unset !important; 
+    letter-spacing: 10px;
+}
+.prettyprint .pln {
+    color: #007020;
+    font-weight: bold;
+}
+.prettyprint .com {
+    color: #60a0b0;
+    font-style: italic;
+}
+slides > slide pre {
+	margin-bottom:0px;
+}
+.two-columns {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+}
+.three-columns {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+}
+
+.tab-content {
+    border: solid 1px #dddddd;   
+    padding: 5px;
+}
+
+
+h2 > code {
+ /* font-family: 'VeteranTypewriter'; */
+    font-weight: bold;
+    color: #3E769A;   
+}
+
+.smaller {
+    font-size: 80%;
+}
+
+h2 {
+    font-size: 30px;
+}
