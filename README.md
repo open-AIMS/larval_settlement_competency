@@ -34,7 +34,7 @@ inevitable changes to the underlying runtime environment(s).
 
 # To run the code in the docker container
 
-   `docker run --rm -v <~/path to repo>:<path within the container> w <working director> 00_main.R`
+   `docker run --rm -v <path to repo>:<path within the container> -w <working director> Rscript 00_main.R`
    
    where:
    
@@ -51,6 +51,6 @@ inevitable changes to the underlying runtime environment(s).
      become the working directory.
    
    For example:
-   `docker run --rm -v "$PWD":~/home/larval_settlement -w /home/larval_settlement/scripts 00_main.R`
+   `docker run --rm -v "$PWD":~/home/larval_settlement -w /home/larval_settlement/scripts Rscript 00_main.R`
    
 
