@@ -6,10 +6,22 @@ Randall (AIMS).  **Note, this repo does not include the data.**
 
 Whilst it is possible to run the R code (starting with `00_main.R`),
 to ensure full compatibility, it is recommended that the code be run
-through either a `docker` image created from the included `Dockerfile`
-or else a `singularity` image, similarly built from the aforementioned
-docker image.  These approaches will safeguard the codebase from
-inevitable changes to the underlying runtime environment(s).
+through either a [docker](https://www.docker.com) image created from
+the included `Dockerfile` or else a
+[apptainer/singularity](https://apptainer.org/) image on a HPC,
+similarly built from the aforementioned docker image.  These
+approaches will safeguard the codebase from inevitable changes to the
+underlying runtime environment(s).
+
+# To run the code without `docker` or `singularity`
+
+1. clone this repo (into the current working directory)
+
+   `git clone https://github.com/open-AIMS/larval_settlement_competency.git`
+   
+   or if you use ssh keys
+   
+   `git clone git@github.com:open-AIMS/larval_settlement_competency.git`
 
 # To build the Docker image
 
