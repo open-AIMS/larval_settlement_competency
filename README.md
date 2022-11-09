@@ -23,7 +23,12 @@ underlying runtime environment(s).
    
    `git clone git@github.com:open-AIMS/larval_settlement_competency.git`
 
-# To build the Docker image
+2. start a new R session and run the `00_main.R` script in the
+   `scripts/` folder
+
+# To run within docker
+
+## To build the Docker image
 
 1. ensure [docker](https://www.docker.com) is installed on your local
    machine
@@ -44,9 +49,9 @@ underlying runtime environment(s).
 
    `docker run --rm -it R_brms R`
 
-# To run the code in the docker container
+## To run the code in the docker container
 
-   `docker run --rm -v <path to repo>:<path within the container> -w <working director> Rscript 00_main.R`
+   `docker run --rm -v <path to repo>:<path within the container> -w <working director> R_brms Rscript 00_main.R`
    
    where:
    
@@ -63,6 +68,59 @@ underlying runtime environment(s).
      become the working directory.
    
    For example:
-   `docker run --rm -v "$PWD":~/home/larval_settlement -w /home/larval_settlement/scripts Rscript 00_main.R`
-   
+   `docker run --rm -v "$PWD":~/home/larval_settlement -w /home/larval_settlement/scripts R_brms Rscript 00_main.R`
 
+# To run within apptainer/singularity on a HPC
+
+## To build the apptainter/singularity image
+
+1. ensure [apptainer/singularity](https://apptainer.org/) is installed on your local
+   machine
+
+2. save a local copy of the docker image as an archive (to the current
+   working directory)
+   
+   `docker save R_brms -o R_brms.tar`
+   
+   This will create a zip (tar) of the docker image.
+   
+3. build the apptainer/singularity image from this archive
+
+   `singularity build R_brms.sif docker-archive://R_brms.tar`
+
+4. test whether the apptainer/singularity image works in a superficial
+   way (does it drop you into an interactive R session - `q()` to
+   quit)
+   
+   `singularity exec -B <path to repo>:<path within the container> R_brms.sif R` 
+
+## Run the apptainer/singularity image on a HPC
+
+1. clone the repository to the HPC (must be `ssh`'d into the HPC first)
+
+   `git clone git@github.com:open-AIMS/larval_settlement_competency.git`
+
+
+2. scp singularity image to the HPC
+
+   `scp R_brms.sif <user>@hpc-l001.aims.gov.au:<path on HPC>`
+   
+   where:
+   
+   - `<user>` is your username of the HPC
+   - `<path on HPC>` is the path of the repository on the HPC
+   
+3. run the apptainer/singularity container
+
+   `singularity exect -B <path on HPC>:<path within container> R_brms.sif --pwd <working directory> Rscript 00_main.R`
+   
+   where:
+   
+   - `<path on HPC>` is the path of the repository on the HPC
+
+   - `<path within container>` is the path (full) of a location to
+      mount the host folder to within the container.  This location
+      will be created on the fly.
+	  
+   - `<working directory>` is the full path within the container to
+     become the working directory.
