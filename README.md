@@ -124,3 +124,9 @@ underlying runtime environment(s).
 	  
    - `<working directory>` is the full path within the container to
      become the working directory.
+
+4. run the documentation (first navigate to the repo folder)
+
+   `singularity exect -B <path on HPC>:<path within container> R_brms.sif --pwd <working directory> make -i`
+   
+   this should create a file called `analysis.html` in the `docs` folder
