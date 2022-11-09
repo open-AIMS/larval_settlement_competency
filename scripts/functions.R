@@ -210,7 +210,7 @@ LD50 <- function(mod) {
 } 
 ## ----end
 
-## ---- LD50dif
+## ---- functionLD50dif
 LD50dif <- function(d) {
     d <- d %>% ungroup 
     coefs <- d %>%
@@ -226,7 +226,7 @@ LD50dif <- function(d) {
 }
 ## ----end
 
-## ---- pairwise tests
+## ---- function pairwise tests
 pairwiseTests <- function(coefs, exponentiate = FALSE, k, varnames, comp.value = 0) {
     Xmat <- NULL
     rnames <- NULL
@@ -250,7 +250,7 @@ pairwiseTests <- function(coefs, exponentiate = FALSE, k, varnames, comp.value =
 }
 ## ----end
 
-## ---- oddsQ1
+## ---- functionoddsQ1
 oddsRatio <- function(mod) {
    mod %>% emtrends(specs = 'SpecificTreatment', var = 'LarvalAge') %>%
         tidy_draws() %>% 

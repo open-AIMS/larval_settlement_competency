@@ -4,7 +4,7 @@ author: Murray Logan
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
-    code_folding: show
+    code_folding: hide
     collapse: yes
     df_print: paged
     fig_caption: yes
@@ -48,13 +48,20 @@ knitr::read_chunk("../scripts/40_summariseModels.R")
 ```
 
 # Info
-# Preparations {.tabset .tabset-faded}
 
+The code responsible for the described actions can be toggled via the
+`hide/code` buttons.
+
+# Preparations {.tabset .tabset-faded}
 
 ## Load the packages
 
+1. establish (and if necessary create) a set of paths
+
 ```{r paths, results='markdown', eval=TRUE}
 ```
+
+2. load necessary packages
 
 ```{r loadPackages, results='markdown', eval=TRUE}
 ```
@@ -140,6 +147,34 @@ settled larvae have yet to exceed the threshold proportion).
 
 ## EDA {.tabset .tabset-pills}
 
+The following exploratory data analysis figures comprise two panels.
+
+In the top panel, the percentage of settlement (Number settled as a
+percentage of the Number settled and Number not settled) in each
+sampling unit (well) is plotted against larval age (in days)
+conditional on the inducer treatments (colours). Faint lines represent
+trends within each plate (averaged over wells) and solid lines
+represent gam smoothers (binomial family).  Plotting symbols are used
+to signify whether larval cohorts exceed the settlement threshold or
+not.  Note, this is cummulative, so all larval ages subsequent to an
+age that exceeds the threshold will also be deemed to have exceeded
+the threshold.  With the exception of the points, this sub-figure will
+not change between alternative thresholds.  It is also worth pointing
+out that I have not jittered the points and thus there may well be
+numerous overlapping points (making the symbols difficult to
+distinguish).  Furthermore, symbols further to the right of the
+sub-figure are not expected to change between alternative thresholds.
+
+In the bottom panel settlement (cummulative cohort settlement
+exceedence from the threshold) is plotted against larval age
+conditional on the inducer treatments (colours).  Fain lines represent
+thrends within each plate (averaged over wells) and solid lines
+represent logistc regression smoothers.
+
+
+```{r functionEDA, results='markdown', eval=FALSE, echo = TRUE}
+```
+
 ```{r EDAQ1, results='markdown', eval=FALSE, echo = TRUE}
 ```
  
@@ -161,9 +196,23 @@ for (i in 1:length(SPECIES)) {
 
 The relationships between larval settlement and the interaction of
 larval age and inducement treatment was explored by hierarchical
-logistic models (@Gelman-2007-2007) in a Bayesian framework.
+logistic models [@Gelman-2007-2007] in a Bayesian framework.
 
-Each Bayesian 
+All Bayesian models included 3 chains (NUTS), each with 6000
+iterations, thinned to a rate of 10, and excluded the first 2000
+iterations (warmup).  Chain mixture and convergence was assessed via
+trace plots, autocorrelation plots, Rhat and effective sample size
+diagnostics.  Models were also validated via DHARMa [@Hartig-2022]
+simulated residuals
+  
+All statistical models were performed in the R (4.2.1) Statistical and
+Graphical Environment [@RCoreTeam-2022] via the _brms_ [@Burkner-2021]
+package
+
+ 
+
+```{r functionFitModel, results='markdown', eval=FALSE}
+```
 
 ```{r fitModelQ1, results='markdown', eval=FALSE}
 ```
@@ -174,6 +223,23 @@ SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
 ```
     
 ## Diagnostics {.tabset .tabset-pills}
+
+A quick scan of all the MCMC and residual diagnostics suggests that:
+
+- the chains are well mixed (trace plots very noisy and consistently
+  so for each chain)
+- no autocorrelation amongst retained draws
+- the chains have converged (all Rhat values < 1.01)
+- the No-U-Turn (NUTS) sampler appears to have sampled effectively
+  (all ESS/Sample size values > 0.5)
+- there is no evidence of a lack of fit (DHARMa residuals did not
+  reveal any major issues)
+
+```{r functionMCMCdiagnostics, results='markdown', eval=FALSE}
+```
+
+```{r functionDHARMa, results='markdown', eval=FALSE}
+```
 
 ```{r MCMCdiagnosticsQ1, results='markdown', eval=FALSE}
 ```
@@ -194,7 +260,17 @@ for (i in 1:length(SPECIES)) {
 
 ## Partial plots {.tabset .tabset-pills}
 
-```{r PartialPlotQ1, results='markdown', eval=FALSE}
+The following figures display the expected cohort settlement
+probability (of exceeding threshold) associated with larval age for
+each inducer treatment.  Solid lines represent posterior medians and
+ribbons represent associated 95% credibility intervals.
+
+```{r functionPartials, results='markdown', eval=FALSE}
+```
+```{r functionPartialPlot, results='markdown', eval=FALSE}
+```
+
+```{r partialPlotQ1, results='markdown', eval=FALSE}
 ```
 
 ```{r PartialPlots  Q1, results='asis', eval=TRUE, echo = FALSE}
@@ -208,6 +284,42 @@ for (i in 1:length(SPECIES)) {
 ```
 
 ## LD50 {.tabset .tabset-pills}
+
+One measure of the time (age) to settlement competency could be the
+_LD50_ - the so called 'leathal dose 50' which estimates the value
+along the x-axis that is associated with the inflection point (point
+at which the response switches from more to less likely, e.i. a
+probability of 0.5).  In the current context, this would represent the
+age at which the cohort is more likely to have exceeded the threshold
+settlement.  Whilst the absolute value of this measure might only have
+a tenuous interpretation in this context, the pairwise differences
+between LD50 associated with each inducer treatment does provide a
+means to compare settlement competency ties between inducer
+treatments.  The differences are presented in units of age and thus:
+
+- positive numbers indicate that the first treatment in the comparison
+  (variable) is associated with a more protracted age to cohort
+  settlement
+- negative numbers indicate that the first treatment in the comparison
+  (variable) is associated with faster cohort
+  settlement
+- the magnitude of the values is a reflection of the degree of
+  difference in cohort settlement competency ages between the inducer
+  treatments.
+- Exceedence probabilies are used to enumerate the strength of the
+  evidence that the difference is greater (or less) than 0 (no
+  effect).  Exceedence probabilities (P>0) between 0.9 and 0.95
+  indicate _evidence_ that the age to cohort settlement competency is
+  more protracted for the rist treatment in the comparison.  Values
+  above 0.95 indicate _strong evidence_.  Exceedence probabilities
+  (P<0) reverse the polarity of the comparison.
+
+```{r functionLD50, results='markdown', eval=FALSE}
+```
+```{r functionLD50dif, results='markdown', eval=FALSE}
+```
+```{r function pairwise tests, results='markdown', eval=FALSE}
+```
 
 ```{r LD50Q1, results='markdown', eval=FALSE}
 ```
@@ -235,6 +347,29 @@ for (i in 1:length(SPECIES)) {
  
 ## Odds ratios {.tabset .tabset-pills}
 
+Odds ratios of the partial slopes provide a measure of the rate at
+which the odds of cohort settlement competency change per unit change
+of larval age.  Odds above 1 indicate that the odds of cohort
+settlement competency increase with every additional day of larval
+age.  Odds values of 1.5, 2 and 3 represent fractional changes in odds
+of 50%, 100% (doubling) and 200% respectively for every addional day
+of larval age.  The larger the value, the steeper the rate of change
+in cohort settlement probability.
+
+Pairwise comparisons of cohort settlement odds provide a way to
+compare the treatments.  These differences are presented on an odds
+ratio scale:
+
+- values between 0 and 1 indicate that the first treatment in the
+  comparison (variable) has a slower rate of cohort settlement change.  For
+  example, a value of 0.5 would indicate that the rate associated with
+  the first tteatment is half that of the second.
+- values above 1 indicate that the first treatment in the comparison
+  (variable) has a faster rate of cohort settlement change.  A value
+  of 1.5 indicates a 50% increase in cohort settlement change.
+
+```{r functionoddsQ1, results='markdown', eval=FALSE}
+```
 ```{r oddsQ1, results='markdown', eval=FALSE}
 ```
 
@@ -259,3 +394,9 @@ for (i in 1:length(SPECIES)) {
 }
 ```
   
+# Preparation notes
+
+- the full codebase for this project can be found 
+  [on github](https://github.com/open-AIMS/larval_settlement_competency)
+
+# References
