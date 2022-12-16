@@ -158,15 +158,34 @@ partials <- function(mod) {
 
 ## ----functionPartialPlot
 ## The following function produces a simple partial plot
-partialPlot <- function(pred) {
+partialPlot <- function(pred, T) {
     pred %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
                    colour = SpecificTreatment,
                    fill = SpecificTreatment)) +
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
+        scale_fill_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
+        scale_colour_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
+        scale_x_continuous('Larval age') +
+        scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) + 
         geom_line() +
         theme_classic()
+}
+## ----end
+
+## ----functionCompilation
+partial_plot_compilations <- function(path, g, ncol = 3, dpi = 100) {
+     gw <- g %>% 
+         suppressMessages() %>%
+         suppressWarnings() %>%
+         wrap_plots() + guide_area() + plot_layout(guides = 'collect', ncol = ncol) &
+         guides(
+             fill = "none",
+             colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+     n_patches <- length(gw$patches$plots) + 1
+     dims <- wrap_dims(n_patches, ncol = ncol, nrow = NULL)
+     ggsave(path, gw, width = 4*dims[2], height = 3*dims[1], dpi = dpi)
 }
 ## ----end
 
@@ -203,7 +222,8 @@ LD50 <- function(mod) {
         pivot_longer(cols = c(-.chain,-.iteration,-.draw)) %>%
         separate(col = name, into = c("Parameter", "Variable"), sep=" ") %>%
         group_by(.draw, Variable) %>%
-        summarise(LD50 =-1*value[1]/value[2]) #%>%
+        summarise(LD50 =-1*value[1]/value[2]) %>%
+        mutate(LD50 = ifelse(LD50<0, NA, LD50))                                #%>%
         ## ungroup() %>%
         ## group_by(Variable) %>%
         ## median_hdci()

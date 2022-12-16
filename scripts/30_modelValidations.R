@@ -3,7 +3,7 @@ source('functions.R')
 ## Question 1: age to settlement
 {
     ## ---- Analysis loop
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         ## ---- load Model Validations
         load(file = paste0("../data/modelled/data.q1","__",thresholdProp,".mod.RData"))
         ## ----end

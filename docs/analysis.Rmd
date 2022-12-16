@@ -184,7 +184,7 @@ SPECIES <- data.q1 %>% pull(Species) %>% unique()
 
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
         cat(paste0("![](../output/figures/eda_",SPECIES[i],"__",thresholdProp,"_.png) \n\n"))
     }
@@ -247,7 +247,7 @@ A quick scan of all the MCMC and residual diagnostics suggests that:
 ```{r MCMCplots modelled Q1, results='asis', eval=TRUE, echo = FALSE}
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
         cat(paste0("![](../output/figures/Trace_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
         cat(paste0("![](../output/figures/AC_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
@@ -276,7 +276,7 @@ ribbons represent associated 95% credibility intervals.
 ```{r PartialPlots  Q1, results='asis', eval=TRUE, echo = FALSE}
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
         cat(paste0("![](../output/figures/PartialPlot_",SPECIES[i],"__",thresholdProp,"_.png) \n"))
     }
@@ -332,7 +332,7 @@ load(files[1])
 SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
         load(paste0(DATA_PATH, "modelled/data.q1__",thresholdProp,".mod_sum.RData"))
         print(data.q1.mod[i,'LD50tab'][[1]][[1]] %>%
@@ -381,7 +381,7 @@ load(files[1])
 SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    for (thresholdProp in c(0.1, 0.3, 0.5)) {
+    for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
         cat(paste0("\n#### Thresh. prop.:", thresholdProp, "\n"))
         load(paste0(DATA_PATH, "modelled/data.q1__",thresholdProp,".mod_sum.RData"))
         print(data.q1.mod[i,'Oddstab'][[1]][[1]] %>%
@@ -393,7 +393,45 @@ for (i in 1:length(SPECIES)) {
     }
 }
 ```
-  
+
+## Compilation of partial plots {.tabset .tabset-faded}
+
+```{r functionCompilation, results='markdown', eval=FALSE}
+```
+```{r compilationQ1, results='markdown', eval=FALSE}
+```
+ 
+```{r compilationPlots  Q1, results='asis', eval=TRUE, echo = FALSE}
+files <- list.files(path = paste0(OUTPUT_PATH, "/figures"),
+                    pattern = "compilation.*.png",
+                    full.names = TRUE)
+thresholdProp <- str_replace(files, ".*compilation_(.*)_.png", "\\1")
+for (thresh in thresholdProp) {
+
+    cat(paste0("\n### Thresh. prop.:", thresh, "\n"))
+    cat(paste0("![](../output/figures/compilation_",thresh,"_.png) \n"))
+    cat('\n')
+}
+```
+
+## Days vs Threshold {.tabset .tabset-faded}
+
+```{r days_vs_thresholdQ1, results='markdown', eval=FALSE}
+```
+
+```{r days_vs_threshold Q1, results='asis', eval=TRUE, echo = FALSE}
+files <- list.files(path = paste0(OUTPUT_PATH, "/figures"),
+                    pattern = "all_LD50.*.png",
+                    full.names = TRUE)
+Species <- str_replace(files, '.*__(.*)_.png', '\\1')
+for (Sp in Species) {
+
+    cat(paste0("\n### ", Sp, "\n"))
+    cat(paste0("![](../output/figures/all_LD50__",Sp,"_.png) \n"))
+    cat('\n')
+}
+```
+
 # Preparation notes
 
 - the full codebase for this project can be found 
