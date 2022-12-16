@@ -36,7 +36,10 @@ underlying runtime environment(s).
 2. navigate to this repositories root
 
 3. build the docker image (with a tag to help distinguish this from
-   other docker images you might have)
+   other docker images you might have).  This will take its
+   instructions from the included `Dockerfile`.  **Note, do not be on
+   AIMS VPN when building this image - it often fails randomly in the
+   middle of retrieving all the necessary packages**
    
    `docker build . --tag R_brms`
 
