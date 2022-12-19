@@ -104,12 +104,12 @@ fitModel <- function(dat) {
 ## The following functions produce MCMC diagnostic plots
 MCMCdiagnostics_trace <- function(mod) {
     vars <- mod %>% get_variables()
-    pars <- vars %>% stringr::str_subset("^b_.*|^sd_.*")
+    pars <- vars %>% stringr::str_subset("^b_.*|^bs_.*|^sd_.*")
     mod$fit %>% rstan::stan_trace(pars = pars) 
 }
 MCMCdiagnostics_ac <- function(mod) {
     vars <- mod %>% get_variables()
-    pars <- vars %>% stringr::str_subset("^b_.*|^sd_.*")
+    pars <- vars %>% stringr::str_subset("^b_.*|^bs_.*|^sd_.*")
     mod$fit %>% rstan::stan_ac(pars = pars) 
 }
 MCMCdiagnostics_rhat <- function(mod) {
@@ -134,12 +134,25 @@ DHARMa <- function(mod) {
 }
 ## ----end
 
+## ----functionDHARMaQ2
+## The following function produces DHARMa based diagnostics
+DHARMaQ2 <- function(mod) {
+    preds <- mod %>% posterior_predict(ndraws = 250, summary = FALSE)
+    mod.resids <- createDHARMa(
+        simulatedResponse = t(preds),
+        observedResponse = mod$data$NoSet,
+        fittedPredictedResponse = apply(preds, 2, median),
+        integerResponse = FALSE
+    )
+    wrap_elements(~plot(mod.resids))
+}
+## ----end
 ## ----functionSumTable
 ## The following function generates a summary table of the
 ## regression parameters
 sumTable <- function(mod) {
     mod %>% summarise_draws() %>%
-        filter(str_detect(variable, "^b_.*|^s_.*"))
+        filter(str_detect(variable, "^b_.*|^bs_.*|^s_.*"))
 }
 ## ----end
 
@@ -156,9 +169,40 @@ partials <- function(mod) {
 }
 ## ----end
 
+
+## ----functionPartialsQ2
+## The following function calculates the cell means from the model
+## and retains all draws
+partialsQ2 <- function(mod) {
+    dat <- mod$data
+    newdata <-  with(dat,
+                     list(LarvalAge = modelr::seq_range(LarvalAge, n = 100),
+                          SpecificTreatment = levels(SpecificTreatment)))
+    
+    mod %>% emmeans(~LarvalAge|SpecificTreatment, at = newdata, type = "link") %>%
+        ## contrast(by = "LarvalAge",
+        ##          method = 'pairwise') %>%
+        gather_emmeans_draws()
+}
+## ----end
+
+## ----functionAUCQ2
+## this function calculates the areas under curves
+AUC <- function(mod) {
+    partials <- mod %>% partialsQ2()
+    partials %>%
+        mutate(.value = plogis(.value),
+               T = 1) %>%
+        ungroup() %>%
+        group_by(.draw, SpecificTreatment) %>%
+        summarise(Area = sum(.value),
+                  Total = sum(T))
+}
+## ----end
+
 ## ----functionPartialPlot
 ## The following function produces a simple partial plot
-partialPlot <- function(pred, T) {
+partialPlot <- function(pred, T=NULL) {
     pred %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
@@ -168,7 +212,8 @@ partialPlot <- function(pred, T) {
         scale_fill_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
         scale_colour_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
         scale_x_continuous('Larval age') +
-        scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) + 
+        {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) } + 
+        {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob'),25)) } + 
         geom_line() +
         theme_classic()
 }
@@ -291,5 +336,25 @@ oddsRatiodif <- function(odds) {
     varnames <- colnames(coefs) 
     k <- varnames %>% length()
     pairwiseTests(coefs, exponentiate = TRUE, k=k, varnames=varnames, comp.value = 1)
+}
+## ----end
+
+## ---- functionfitModelQ2
+fitModelQ2 <- function(dat) {
+    dat <- dat %>% dplyr::select(NoSet, NoNotSet, SpecificTreatment, LarvalAge, Plate) %>%
+        na.omit() %>%
+        droplevels()
+
+    form <- bf(NoSet|trials(NoSet + NoNotSet) ~ s(LarvalAge, by = SpecificTreatment, k = 5) + (1|Plate),
+                   family = "binomial")
+    mod <- brm(form,
+                data = dat,
+                iter = 6000,
+                warmup = 2000,
+                chains = 3, cores = 3,
+                thin = 2,
+                control = list(adapt_delta = 0.99, max_treedepth = 20),
+                backend = 'cmdstanr')
+    mod
 }
 ## ----end

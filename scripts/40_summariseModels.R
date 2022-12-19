@@ -12,7 +12,7 @@ source('functions.R')
         data.q1.mod <- data.q1.mod %>%
             mutate(sumTable = purrr::map(.x = Mod, .f = sumTable))
         ## ----end
-        ## ----partialPlotQ1
+        ## ----partialsQ1
         data.q1.mod <- data.q1.mod %>%
             mutate(Partials = purrr::map(.x = Mod, .f = partials))
         ## ----end
