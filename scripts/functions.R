@@ -200,6 +200,136 @@ AUC <- function(mod) {
 }
 ## ----end
 
+## ---- functionAUCPlot
+AUCplot <- function(x) {
+    x %>%
+        ggplot(aes(colour = SpecificTreatment,
+                   fill = SpecificTreatment,
+                   x = Area)) +
+        stat_halfeye(alpha = 0.3) +
+        scale_x_continuous('Area under curve') +
+        scale_fill_discrete('Inducer') +
+        scale_colour_discrete('Inducer') +
+        theme_classic() +
+        ## scale_y_continuous('',expand = c(0,0)) +
+        theme(axis.text.y = element_blank(),
+              axis.ticks.y = element_blank(),
+              axis.title.y = element_blank())
+}
+## ----end
+
+## ---- functionAUC_diff
+AUC_diff <- function(x) {
+    ## fix this
+    ## want to work out a way to control the comparisons,
+    ## but dont always have all the of the SpecificTreatments
+    v <- c('CCA','rubble','disc','control')
+    xx <- x %>% pull(SpecificTreatment) %>% unique 
+    vv <- v[str_which(string = v, paste(xx, collapse='|'))]
+    vs <- combn(vv, 2, simp = FALSE)
+    x %>%
+        compare_levels(variable = Area,
+                       ## comparison = 'pairwise',
+                       ## comparison = list(
+                       ##     c('CCA','control'),
+                       ##     c('CCA','disc'),
+                       ##     c('CCA','rubble'),
+                       ##     c('rubble','disc'),
+                       ##     c('rubble','control'),
+                       ##     c('disc','control')),
+                       comparison = vs,
+                       by = SpecificTreatment) 
+}
+## ----end
+
+## ---- functionAUC_ratio
+AUC_ratio <- function(x) {
+    ## fix this
+    ## want to work out a way to control the comparisons,
+    ## but dont always have all the of the SpecificTreatments
+    v <- c('CCA','rubble','disc','control')
+    xx <- x %>% pull(SpecificTreatment) %>% unique 
+    vv <- v[str_which(string = v, paste(xx, collapse='|'))]
+    vs <- combn(vv, 2, simp = FALSE)
+    x %>%
+        mutate(lArea = log(Area)) %>%
+        compare_levels(variable = lArea,
+                       ## comparison = 'pairwise',
+                       ## comparison = list(
+                       ##     c('CCA','control'),
+                       ##     c('CCA','disc'),
+                       ##     c('CCA','rubble'),
+                       ##     c('rubble','disc'),
+                       ##     c('rubble','control'),
+                       ##     c('disc','control')),
+                       comparison = vs,
+                       by = SpecificTreatment) 
+}
+## ----end
+## ---- functionAUC_diff_sums
+AUC_diff_sums <- function(x) {
+    x %>% ungroup() %>%
+        ## mutate(SpecificTreatment = factor(SpecificTreatment,
+        ##                                   levels = c('control', 'disc', 'rubble', 'CCA'))) %>%
+        group_by(SpecificTreatment) %>%
+        summarise_draws(median,
+                        HDInterval::hdi,
+                        `P<0`=function(x) sum(x<0)/length(x),
+                        `P>0`=function(x) sum(x>0)/length(x))
+}
+## ----end
+
+## ---- functionAUC_ratio_sums
+AUC_ratio_sums <- function(x) {
+    x %>% ungroup() %>%
+        mutate(Area = exp(lArea)) %>%
+        group_by(SpecificTreatment) %>%
+        summarise_draws(median,
+                        HDInterval::hdi,
+                        `P<1`=function(x) sum(x<1)/length(x),
+                        `P>1`=function(x) sum(x>1)/length(x))
+}
+## ----end
+
+## ---- functionAUC_diff_plot
+AUC_diff_plot <- function(x) {
+    x %>%
+        ## mutate(SpecificTreatment = factor(SpecificTreatment,
+        ##                                   levels = c('disc - control',
+        ##                                              'rubble - control',
+        ##                                              'CCA - control',
+        ##                                              'CCA - disc',
+        ##                                              'rubble - disc',
+        ##                                              'CCA - rubble'))) %>%
+        ggplot() +
+        geom_vline(xintercept = 0, linetype = 'dashed') +
+        stat_halfeye(aes(y = SpecificTreatment, x = Area), alpha = 0.4,
+                     fill_type = 'gradient') +
+        ## geom_density() +
+        ## facet_grid(SpecificTreatment~., scales = 'free')
+        ## geom_density_ridges(aes(y = SpecificTreatment, x = Area),
+        ##                     alpha = 0.4) +
+        scale_x_continuous('Difference in area under curve') +
+        theme_classic() +
+        theme(axis.title.y = element_blank())
+}
+## ----end
+
+## ---- functionAUC_ratio_plot
+AUC_ratio_plot <- function(x) {
+    x %>%
+        ggplot() +
+        geom_vline(xintercept = 1, linetype = 'dashed') +
+        stat_halfeye(aes(y = SpecificTreatment, x = exp(lArea)), alpha = 0.4,
+                     fill_type = 'gradient') +
+        scale_x_continuous('Fractional difference in area under curve',
+                           trans = scales::log2_trans(),
+                           breaks = scales::breaks_log(base = 2)) +
+        theme_classic() +
+        theme(axis.title.y = element_blank())
+}
+## ----end
+
 ## ----functionPartialPlot
 ## The following function produces a simple partial plot
 partialPlot <- function(pred, T=NULL) {

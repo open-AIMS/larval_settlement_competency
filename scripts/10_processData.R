@@ -2,6 +2,7 @@ source('functions.R')
 
 ## ---- readData
 data <- read_csv(file = paste0(DATA_PATH, "primary/AllData_Murray.csv"), trim_ws = TRUE)
+data <- data %>% mutate(Plate = factor(paste0(LarvalAge, Plate)))
 glimpse(data)
 ## ----end
 

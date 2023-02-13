@@ -12,7 +12,6 @@ source('functions.R')
         ## dat <- data.q1[1,'data.sub'][[1]][[1]]
         data.q2.mod <- data.q1 %>%
             ungroup() %>%
-            slice(1) %>% 
             mutate(Mod = purrr::map(.x = data.sub, .f = fitModelQ2))
         ## ----end
         ## ---- save Models Q2
@@ -86,6 +85,7 @@ source('functions.R')
              data.q2.mod$PartialPlot, ggsave, width = 6, height = 4, dpi = 300)
         ## ----end
         ## ---- areaQ2
+        load(file = paste0('../data/modelled/data.q2__.partials.RData'))
         data.q2.mod <- data.q2.mod %>%
             mutate(AreaUnderCurve = purrr::map(.x = Mod,
                                                .f = ~ AUC(.x)),
@@ -97,23 +97,7 @@ source('functions.R')
                                                               HDInterval::hdi)
                                           ),
                    Area_plot = purrr::map(.x = AreaUnderCurve,
-                                          .f = function(x) {
-                                              x %>%
-                                                  ## areas %>%
-                                                  ggplot(aes(colour = SpecificTreatment,
-                                                             fill = SpecificTreatment,
-                                                             x = Area)) +
-                                                  stat_halfeye(alpha = 0.3) +
-                                                  scale_x_continuous('Area under curve') +
-                                                  scale_fill_discrete('Inducer') +
-                                                  scale_colour_discrete('Inducer') +
-                                                  theme_classic() +
-                                                  ## scale_y_continuous('',expand = c(0,0)) +
-                                                  theme(axis.text.y = element_blank(),
-                                                        axis.ticks.y = element_blank(),
-                                                        axis.title.y = element_blank())
-                                          }
-                                          )
+                                          .f = ~ AUCplot(.x))
                    )
         map2(paste0(OUTPUT_PATH, "figures/PartialArea_",data.q2.mod$Species,"__.pdf"),
              data.q2.mod$Area_plot, ggsave, width = 6, height = 4)
@@ -121,73 +105,54 @@ source('functions.R')
              data.q2.mod$Area_plot, ggsave, width = 6, height = 4, dpi = 72)
         map2(paste0(OUTPUT_PATH, "figures/PartialArea_",data.q2.mod$Species,"__large_.png"),
              data.q2.mod$Area_plot, ggsave, width = 6, height = 4, dpi = 300)
+        save(data.q2.mod, file = paste0('../data/modelled/data.q2__.area.RData'))
         ## ----end
+        ## x <- data.q2.mod[2,'AreaUnderCurve'][[1]][[1]]
         ## ---- compare_Areas Q2
+        load(file = paste0('../data/modelled/data.q2__.area.RData'))
         data.q2.mod <- data.q2.mod %>%
+            ## ungroup() %>% slice(2) %>%
             mutate(Areas_diff = purrr::map(.x = AreaUnderCurve,
-                                           .f = function(x) {
-                                               x %>%
-                                                   compare_levels(variable = Area,
-                                                                  ## comparison = 'pairwise',
-                                                                  comparison = list(
-                                                                      c('CCA','control'),
-                                                                      c('CCA','disc'),
-                                                                      c('CCA','rubble'),
-                                                                      c('rubble','disc'),
-                                                                      c('rubble','control'),
-                                                                      c('disc','control')),
-                                                                  by = SpecificTreatment) 
-                                           }),
-                   Areas_diff_sums = purrr::map(.x = Areas_diff,
-                                                .f = function(x) {
-                                                   x %>% ungroup() %>%
-                                                       mutate(SpecificTreatment = factor(SpecificTreatment,
-                                                                                         levels = c('control', 'disc', 'rubble', 'CCA'))) %>%
-                                                       group_by(SpecificTreatment) %>%
-                                                       summarise_draws(median,
-                                                                       HDInterval::hdi,
-                                                                       `P<0`=function(x) sum(x<0)/length(x),
-                                                                       `P>0`=function(x) sum(x>0)/length(x))
-
-                                                }))
-        
+                                           .f = ~ AUC_diff(.x) 
+                                           ),
+                   Areas_ratio = purrr::map(.x = AreaUnderCurve,
+                                            .f = ~ AUC_ratio(.x))
+                                           )
+        save(data.q2.mod, file = paste0("../data/modelled/data.q2",".mod_areas_diff.RData"))
+        ## ----end
+        ## ---- compare_Areas_sums Q2
+        load(file = paste0("../data/modelled/data.q2",".mod_areas_diff.RData"))
         data.q2.mod <- data.q2.mod %>%
-                   mutate(Areas_diff_plot = purrr::map(.x = Areas_diff,
-                                                .f = function(x) {
-                                                    x %>%
-                                                        mutate(SpecificTreatment = factor(SpecificTreatment,
-                                                                                          levels = c('disc - control',
-                                                                                                     'rubble - control',
-                                                                                                     'CCA - control',
-                                                                                                     'CCA - disc',
-                                                                                                     'rubble - disc',
-                                                                                                     'CCA - rubble'))) %>%
-                                                        ggplot() +
-                                                        geom_vline(xintercept = 0, linetype = 'dashed') +
-                                                        stat_halfeye(aes(y = SpecificTreatment, x = Area), alpha = 0.4,
-                                                                     fill_type = 'gradient') +
-                                                        ## geom_density() +
-                                                        ## facet_grid(SpecificTreatment~., scales = 'free')
-                                                        ## geom_density_ridges(aes(y = SpecificTreatment, x = Area),
-                                                        ##                     alpha = 0.4) +
-                                                        scale_x_continuous('Difference in area under curve') +
-                                                        theme_classic() +
-                                                        theme(axis.title.y = element_blank())
-                                                    })
+            mutate(Areas_diff_sums = purrr::map(.x = Areas_diff,
+                                                .f = ~ AUC_diff_sums(.x)),
+                   Areas_ratio_sums = purrr::map(.x = Areas_ratio,
+                                                 .f = ~ AUC_ratio_sums(.x))
                    )
-                   
+        save(data.q2.mod, file = paste0("../data/modelled/data.q2",".mod_areas_sums.RData"))
+        ## ----end
+        ## ---- compare_Areas_plots Q2
+        load(file = paste0("../data/modelled/data.q2",".mod_areas_sums.RData"))
+        data.q2.mod <- data.q2.mod %>%
+            mutate(Areas_diff_plot = purrr::map(.x = Areas_diff,
+                                                .f = ~ AUC_diff_plot(.x)),
+                   Areas_ratio_plot = purrr::map(.x = Areas_ratio,
+                                                 .f = ~ AUC_ratio_plot(.x))
+                   )
+        
         map2(paste0(OUTPUT_PATH, "figures/PartialAreaDiffs_",data.q2.mod$Species,"__.pdf"),
              data.q2.mod$Areas_diff_plot, ggsave, width = 6, height = 4)
         map2(paste0(OUTPUT_PATH, "figures/PartialAreaDiffs_",data.q2.mod$Species,"__.png"),
              data.q2.mod$Areas_diff_plot, ggsave, width = 6, height = 4, dpi = 72)
         map2(paste0(OUTPUT_PATH, "figures/PartialAreaDiffs_",data.q2.mod$Species,"__large_.png"),
              data.q2.mod$Areas_diff_plot, ggsave, width = 6, height = 4, dpi = 300)
-        ## ----end
-        ## ---- save Model Validations Q2
-        data.q2.mod <- data.q2.mod %>%
-            dplyr::select(-Mod)
-        save(data.q2.mod,
-             file = paste0("../data/modelled/data.q2",".mod_areas.RData"))
+        
+        map2(paste0(OUTPUT_PATH, "figures/PartialAreaRatios_",data.q2.mod$Species,"__.pdf"),
+             data.q2.mod$Areas_ratio_plot, ggsave, width = 6, height = 4)
+        map2(paste0(OUTPUT_PATH, "figures/PartialAreaRatios_",data.q2.mod$Species,"__.png"),
+             data.q2.mod$Areas_ratio_plot, ggsave, width = 6, height = 4, dpi = 72)
+        map2(paste0(OUTPUT_PATH, "figures/PartialAreaRatios_",data.q2.mod$Species,"__large_.png"),
+             data.q2.mod$Areas_ratio_plot, ggsave, width = 6, height = 4, dpi = 300)
+        save(data.q2.mod, file = paste0("../data/modelled/data.q2",".mod_areas_plots.RData"))
         ## ----end
         
     }

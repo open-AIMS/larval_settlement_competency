@@ -45,6 +45,7 @@ knitr::read_chunk("../scripts/10_processData.R")
 knitr::read_chunk("../scripts/20_fitModels.R") 
 knitr::read_chunk("../scripts/30_modelValidations.R") 
 knitr::read_chunk("../scripts/40_summariseModels.R") 
+knitr::read_chunk("../scripts/50_cue_comparisons.R") 
 ```
 
 # Info
@@ -270,6 +271,8 @@ ribbons represent associated 95% credibility intervals.
 ```{r functionPartialPlot, results='markdown', eval=FALSE}
 ```
 
+```{r partialsQ1, results='markdown', eval=FALSE}
+```
 ```{r partialPlotQ1, results='markdown', eval=FALSE}
 ```
 
@@ -429,6 +432,191 @@ for (Sp in Species) {
     cat(paste0("\n### ", Sp, "\n"))
     cat(paste0("![](../output/figures/all_LD50__",Sp,"_.png) \n"))
     cat('\n')
+}
+```
+
+# Question 2: effects of inducer type on settlement competency {.tabset .tabset-faded}
+
+```{r GetSpecies, results='markdown', eval=TRUE}
+SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
+```
+
+
+The aim of this component is to compare larval settlement competency
+in association with each of the major inducers (CCA, disc, rubble and
+control) for each coral species.  The approach that we will take is:
+
+- fit Bayesian generalised additive hierarchical models to model the
+  proportion of settled larvae against a cubic regression spline for
+  larval age conditional on inducer type separately for each species.
+  Each model will also include a varying ('random') effect of plate so
+  as to account for the dependency structure.  
+- since the dataset is relatively small, there is a danger of
+  overfitting.  To protect against this, we will restrict the maximum
+  number of spline knots to 5 rather than permitting the models to
+  self-select.  A value of 5 was chosen to permit a reasonable degree
+  of trend tortuosity whilst preventing illogical or unreasonable
+  pertebations resulting from unusual values (that are more common in
+  small datasets).
+- estimate the partial trends associated with each inducer by
+  calculating posterior effects marginalising over plate.
+- calculate the area under each spline trend by numerical integration
+  at a resolution of 100 for each posterior draw
+- perform pairwise contrasts of the full posterior areas and express
+  the results both graphically and in summary tables.
+- in the resulting Area Under Curve tables, posterior distribution of
+  the estimates are summarised as median and lower/upper Highest
+  Posterior Distribution (HPD) intervals.
+- tables of pairwise differences also include exceedence probabilities
+  associated with the differences (P>0).  By way of reference, an exceedence
+  probability of 0.9 for a comparison of (A - B) indicates that we are
+  90% confident that the area under the curve for inducer A is greater
+  than that of inducer B.  Since this is a one-tailed test (only tests
+  for change in one direction), I have also included the reciprocal
+  (P<0).
+- the differences are expressed in absolute differences (first
+  pairwise diff table in the section) as well as in fractional
+  differences (second pairwise diff table in the section).  On a
+  fractional scale, a value of 1 indicates no change (e.i. multiply a
+  value by 1 - no change).  Values of 0.5 and 2 represent halving and
+  doubling respectively (or 50% decline and 100% increase
+  respectively).
+  
+## Fit model
+
+```{r functionfitModelQ2, results='markdown', eval=FALSE}
+```
+
+```{r fitModel Q2, results='markdown', eval=FALSE}
+```
+
+```{r save Models Q2, results='markdown', eval=FALSE}
+```
+
+## Diagnostics {.tabset .tabset-pills}
+
+A quick scan of all the MCMC and residual diagnostics suggests that:
+
+- the chains are well mixed (trace plots very noisy and consistently
+  so for each chain)
+- no autocorrelation amongst retained draws
+- the chains have converged (all Rhat values < 1.01)
+- the No-U-Turn (NUTS) sampler appears to have sampled effectively
+  (all ESS/Sample size values > 0.5)
+- there is no evidence of a lack of fit (DHARMa residuals did not
+  reveal any major issues)
+
+```{r functionMCMCdiagnostics, results='markdown', eval=FALSE}
+```
+
+```{r functionDHARMaQ2, results='markdown', eval=FALSE}
+```
+
+```{r MCMCdiagnostics Q2, results='markdown', eval=FALSE}
+```
+
+```{r MCMCplots modelled Q2, results='asis', eval=TRUE, echo = FALSE}
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    cat(paste0("![](../output/figures/Trace_",SPECIES[i],"_.png) \n"))
+    cat(paste0("![](../output/figures/AC_",SPECIES[i],"_.png) \n"))
+    cat(paste0("![](../output/figures/Rhat_",SPECIES[i],"_.png) \n"))
+    cat(paste0("![](../output/figures/ess_",SPECIES[i],"_.png) \n"))
+    cat(paste0("![](../output/figures/DHARMa_",SPECIES[i],"_.png) \n"))
+}
+```
+
+
+## Partial plots {.tabset .tabset-pills}
+
+The following figures display the expected cohort settlement
+probability (of exceeding threshold) associated with larval age for
+each inducer treatment.  Solid lines represent posterior medians and
+ribbons represent associated 95% credibility intervals.
+
+```{r functionPartials, results='markdown', eval=FALSE}
+```
+```{r functionPartialPlot, results='markdown', eval=FALSE}
+```
+
+```{r partialsQ2, results='markdown', eval=FALSE}
+```
+```{r partialPlotQ2, results='markdown', eval=FALSE}
+```
+
+```{r PartialPlots  Q2, results='asis', eval=TRUE, echo = FALSE}
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    cat(paste0("![](../output/figures/PartialPlot_",SPECIES[i],"__.png) \n"))
+}
+```
+
+## Area under curves {.tabset .tabset-pills}
+
+<details><summary>Code</summary>
+```{r functionAUCQ2, results='markdown', eval=FALSE}
+```
+```{r functionAUCPlot, results='markdown', eval=FALSE}
+```
+```{r functionAUC_diff, results='markdown', eval=FALSE}
+```
+```{r functionAUC_ratio, results='markdown', eval=FALSE}
+```
+```{r functionAUC_diff_sums, results='markdown', eval=FALSE}
+```
+```{r functionAUC_ratio_sums, results='markdown', eval=FALSE}
+```
+```{r functionAUC_diff_plot, results='markdown', eval=FALSE}
+```
+```{r functionAUC_ratio_plot, results='markdown', eval=FALSE}
+```
+```{r areaQ2, results='markdown', eval=FALSE}
+```
+
+```{r compare_Areas Q2, results='markdown', eval=FALSE}
+```
+```{r compare_Areas_sums Q2, results='markdown', eval=FALSE}
+```
+```{r compare_Areas_plots Q2, results='markdown', eval=FALSE}
+```
+</details>
+
+```{r AreaPlotsTables  Q2, results='asis', eval=TRUE, echo = FALSE}
+load(file = paste0('../data/modelled/data.q2.mod_areas_sums.RData'))
+SPECIES <- data.q2.mod %>% pull(Species) %>% unique
+for (i in 1:length(SPECIES)) {
+    cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+
+    cat(':::: {.columns}:\n\n')
+    cat('::: {.column .center style="width:45%;"}\n\n')
+    print(data.q2.mod[i,'Area_sums'][[1]][[1]] %>%
+          filter(variable == 'Area') %>%
+          rename(Inducer = SpecificTreatment) %>%
+          knitr::kable(caption = "Estimated area under curve per inducer treatment."))
+    cat(':::\n\n')
+    cat('::: {.column .center style="width:55%;"}\n\n')
+    cat(paste0("![Posterior distribution of areas under curve per inducer treatments](../output/figures/PartialArea_",SPECIES[i],"__.png) \n"))
+    cat(':::\n\n')
+    cat('::::\n\n')
+    
+    print(data.q2.mod[i,'Areas_diff_sums'][[1]][[1]] %>%
+          filter(variable == 'Area') %>%
+          rename(Inducer = SpecificTreatment) %>%
+          knitr::kable(caption = "Estimated pairwise differences in area under curve between inducer treatments."))
+    cat('\n')
+    print(data.q2.mod[i,'Areas_ratio_sums'][[1]][[1]] %>%
+          filter(variable == 'Area') %>%
+          rename(Inducer = SpecificTreatment) %>%
+          knitr::kable(caption = "Estimated pairwise differences (on a fractional scale) in area under curve between inducer treatments."))
+    cat('\n')
+    cat(':::: {.columns}:\n\n')
+    cat('::: {.column .center style="width:49%;"}\n\n')
+    cat(paste0("![Pairwise differences in areas under curves.](../output/figures/PartialAreaDiffs_",SPECIES[i],"__.png) \n"))
+    cat(':::\n\n')
+    cat('::: {.column .center style="width:49%;"}\n\n')
+    cat(paste0("![Pairwise differences (fractional scale) in areas under curves.](../output/figures/PartialAreaRatios_",SPECIES[i],"__.png) \n"))
+    cat(':::\n\n')
+    cat('::::\n\n')
 }
 ```
 
