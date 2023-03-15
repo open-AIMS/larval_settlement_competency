@@ -4,13 +4,40 @@ source('functions.R')
 {
     ## ---- Analysis loop
     { 
+
+        ## ---- prepareDataQ2
+        load(file = '../data/processed/data.RData')
+        data.q2 <- data %>%
+            mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 
+            group_by(Species, SpecificTreatment, Plate) %>%
+            arrange(LarvalAge) %>%
+            mutate(cumsumSettle = cumsum(Settle),
+                   Settlement = ifelse(cumsumSettle>0, 1, 0)) %>%
+            ungroup() %>%
+            group_by(Species) %>%
+            nest()
+
+        ## remove peptile and extract - A.N. suggestion
+        data.q2 <- data.q2 %>%
+            mutate(data.sub = data)
+            ## mutate(data.sub = map(.x = data,
+            ##                       .f = function(x) {
+            ##                           x %>%
+            ##                               filter(!SpecificTreatment %in% c('peptide','extract')) %>%
+            ##                               droplevels()
+            ##                       }))
+        data.q2 <- data.q2 %>%
+            mutate(EDA = purrr::map(.x = data.sub, .f = EDA))
+        save(data.q2, file = paste0(DATA_PATH, "processed/data.q2.RData"))
+        ## ----end
+
         ## ---- loadData Q2
-        load(file = paste0(DATA_PATH, "processed/data.q1.RData"))
+        load(file = paste0(DATA_PATH, "processed/data.q2.RData"))
         ## ----end
         
         ## ---- fitModel Q2
         ## dat <- data.q1[1,'data.sub'][[1]][[1]]
-        data.q2.mod <- data.q1 %>%
+        data.q2.mod <- data.q2 %>%
             ungroup() %>%
             mutate(Mod = purrr::map(.x = data.sub, .f = fitModelQ2))
         ## ----end
@@ -75,7 +102,8 @@ source('functions.R')
         data.q2.mod <- data.q2.mod %>%
             mutate(
                 PartialPlot = purrr::map(.x = Partials,
-                                            .f = ~ partialPlot(.x, T = NULL)))
+                                         .f = ~ partialPlot(.x, T = NULL,
+                                                            limits = c('CCA','control','disc', 'rubble', 'peptide', 'extract'))))
         save(data.q2.mod, file = paste0('../data/modelled/data.q2__.partials.RData'))
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q2.mod$Species,"__.pdf"),
              data.q2.mod$PartialPlot, ggsave, width = 6, height = 4)
@@ -113,10 +141,12 @@ source('functions.R')
         data.q2.mod <- data.q2.mod %>%
             ## ungroup() %>% slice(2) %>%
             mutate(Areas_diff = purrr::map(.x = AreaUnderCurve,
-                                           .f = ~ AUC_diff(.x) 
+                                           .f = ~ AUC_diff(.x,
+                                                           v = c('CCA','rubble','disc','peptide','extract','control')) 
                                            ),
                    Areas_ratio = purrr::map(.x = AreaUnderCurve,
-                                            .f = ~ AUC_ratio(.x))
+                                            .f = ~ AUC_ratio(.x,
+                                                             v = c('CCA','rubble','disc','peptide','extract','control')))
                                            )
         save(data.q2.mod, file = paste0("../data/modelled/data.q2",".mod_areas_diff.RData"))
         ## ----end

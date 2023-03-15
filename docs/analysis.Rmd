@@ -435,12 +435,11 @@ for (Sp in Species) {
 }
 ```
 
-# Question 2: effects of inducer type on settlement competency {.tabset .tabset-faded}
+# Question 2: effects of inducer type on settlement compentency {.tabset .tabset-faded}
 
 ```{r GetSpecies, results='markdown', eval=TRUE}
 SPECIES <- data.q1.mod %>% pull(Species) %>% unique()
 ```
-
 
 The aim of this component is to compare larval settlement competency
 in association with each of the major inducers (CCA, disc, rubble and
@@ -518,14 +517,15 @@ A quick scan of all the MCMC and residual diagnostics suggests that:
 ```{r MCMCplots modelled Q2, results='asis', eval=TRUE, echo = FALSE}
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    cat(paste0("![](../output/figures/Trace_",SPECIES[i],"_.png) \n"))
-    cat(paste0("![](../output/figures/AC_",SPECIES[i],"_.png) \n"))
-    cat(paste0("![](../output/figures/Rhat_",SPECIES[i],"_.png) \n"))
-    cat(paste0("![](../output/figures/ess_",SPECIES[i],"_.png) \n"))
-    cat(paste0("![](../output/figures/DHARMa_",SPECIES[i],"_.png) \n"))
+    if (file.exists(paste0('../output/figures/Trace_',SPECIES[i],"_.png"))) {
+        cat(paste0("![](../output/figures/Trace_",SPECIES[i],"_.png) \n"))
+        cat(paste0("![](../output/figures/AC_",SPECIES[i],"_.png) \n"))
+        cat(paste0("![](../output/figures/Rhat_",SPECIES[i],"_.png) \n"))
+        cat(paste0("![](../output/figures/ess_",SPECIES[i],"_.png) \n"))
+        cat(paste0("![](../output/figures/DHARMa_",SPECIES[i],"_.png) \n"))
+    }
 }
 ```
-
 
 ## Partial plots {.tabset .tabset-pills}
 
@@ -547,7 +547,9 @@ ribbons represent associated 95% credibility intervals.
 ```{r PartialPlots  Q2, results='asis', eval=TRUE, echo = FALSE}
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
-    cat(paste0("![](../output/figures/PartialPlot_",SPECIES[i],"__.png) \n"))
+    if (file.exists(paste0('../output/figures/PartialPlot_',SPECIES[i],"__.png"))) {
+        cat(paste0("![](../output/figures/PartialPlot_",SPECIES[i],"__.png) \n"))
+    }
 }
 ```
 
@@ -586,6 +588,7 @@ load(file = paste0('../data/modelled/data.q2.mod_areas_sums.RData'))
 SPECIES <- data.q2.mod %>% pull(Species) %>% unique
 for (i in 1:length(SPECIES)) {
     cat(paste0("\n### ", SPECIES[i], " {.tabset .tabset-faded} \n"))
+    if (file.exists(paste0('../output/figures/PartialArea_',SPECIES[i],"__.png"))) {
 
     cat(':::: {.columns}:\n\n')
     cat('::: {.column .center style="width:45%;"}\n\n')
@@ -617,9 +620,12 @@ for (i in 1:length(SPECIES)) {
     cat(paste0("![Pairwise differences (fractional scale) in areas under curves.](../output/figures/PartialAreaRatios_",SPECIES[i],"__.png) \n"))
     cat(':::\n\n')
     cat('::::\n\n')
+    }
+    
 }
 ```
 
+  
 # Preparation notes
 
 - the full codebase for this project can be found 

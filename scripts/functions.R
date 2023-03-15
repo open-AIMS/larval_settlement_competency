@@ -219,11 +219,11 @@ AUCplot <- function(x) {
 ## ----end
 
 ## ---- functionAUC_diff
-AUC_diff <- function(x) {
+AUC_diff <- function(x, v = c('CCA','rubble','disc','control')) {
     ## fix this
     ## want to work out a way to control the comparisons,
     ## but dont always have all the of the SpecificTreatments
-    v <- c('CCA','rubble','disc','control')
+    
     xx <- x %>% pull(SpecificTreatment) %>% unique 
     vv <- v[str_which(string = v, paste(xx, collapse='|'))]
     vs <- combn(vv, 2, simp = FALSE)
@@ -243,11 +243,11 @@ AUC_diff <- function(x) {
 ## ----end
 
 ## ---- functionAUC_ratio
-AUC_ratio <- function(x) {
+AUC_ratio <- function(x, v = c('CCA','rubble','disc','control')) {
     ## fix this
     ## want to work out a way to control the comparisons,
     ## but dont always have all the of the SpecificTreatments
-    v <- c('CCA','rubble','disc','control')
+    
     xx <- x %>% pull(SpecificTreatment) %>% unique 
     vv <- v[str_which(string = v, paste(xx, collapse='|'))]
     vs <- combn(vv, 2, simp = FALSE)
@@ -332,15 +332,15 @@ AUC_ratio_plot <- function(x) {
 
 ## ----functionPartialPlot
 ## The following function produces a simple partial plot
-partialPlot <- function(pred, T=NULL) {
+partialPlot <- function(pred, T=NULL, limits = c('CCA','control','disc', 'rubble')) {
     pred %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
                    colour = SpecificTreatment,
                    fill = SpecificTreatment)) +
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
-        scale_fill_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
-        scale_colour_discrete('Inducer',limits = c('CCA','control','disc', 'rubble')) +
+        scale_fill_discrete('Inducer',limits = limits) +
+        scale_colour_discrete('Inducer',limits = limits) +
         scale_x_continuous('Larval age') +
         {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) } + 
         {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob'),25)) } + 
@@ -471,11 +471,13 @@ oddsRatiodif <- function(odds) {
 
 ## ---- functionfitModelQ2
 fitModelQ2 <- function(dat) {
-    dat <- dat %>% dplyr::select(NoSet, NoNotSet, SpecificTreatment, LarvalAge, Plate) %>%
+    dat <- dat %>%
+        mutate(AgePlate = factor(paste(LarvalAge, Plate))) %>%
+        dplyr::select(NoSet, NoNotSet, SpecificTreatment, LarvalAge, AgePlate) %>%
         na.omit() %>%
         droplevels()
 
-    form <- bf(NoSet|trials(NoSet + NoNotSet) ~ s(LarvalAge, by = SpecificTreatment, k = 5) + (1|Plate),
+    form <- bf(NoSet|trials(NoSet + NoNotSet) ~ s(LarvalAge, by = SpecificTreatment, k = 5) + (1|AgePlate),
                    family = "binomial")
     mod <- brm(form,
                 data = dat,
