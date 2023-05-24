@@ -1,9 +1,16 @@
 source('functions.R')
 
+## ----readSpeciesAbbrev
+speciesAbbrev <- read_csv(file = paste0(DATA_PATH, "primary/Species abbreviations.csv"), trim_ws = TRUE)
+save(speciesAbbrev, file = paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+## ----end
+
 ## ---- readData
-data <- read_csv(file = paste0(DATA_PATH, "primary/AllData_Murray.csv"), trim_ws = TRUE)
-data <- data %>% mutate(Plate = factor(paste0(LarvalAge, Plate)))
+## data1 <- read_csv(file = paste0(DATA_PATH, "primary/AllData_Murray.csv"), trim_ws = TRUE)
+## data1 <- data1 %>% mutate(Plate = factor(paste0(LarvalAge, Plate)))
+data <- read_csv(file = paste0(DATA_PATH, "primary/AllData_Murray 2.csv"), trim_ws = TRUE)
 glimpse(data)
+data <- data %>% mutate(PLATE = factor(DateAgePlate))
 ## ----end
 
 ## ---- processData
@@ -16,20 +23,71 @@ glimpse(data)
 ## Species and SpecificTreatment.  Therefore I will remove the current
 ## attempt and add a more complete version.
 
-data.lookup <- data %>%
+data.1 <- data %>%
+    mutate(Plate = factor(paste0(SpawnDate, LarvalAge, Plate))) %>%
     filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
-    droplevels() %>%
-    group_by(Species, SpecificTreatment) %>%
-    tidyr::expand(Plate) %>% 
-    mutate(LarvalAge = 0, NoSet = 0, NoNotSet = 10)
-
-data <- data %>%
-    filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
-    droplevels() %>%
-    full_join(data.lookup) %>% 
+    droplevels()
+data.2 <- data.1 %>%
+    mutate(
+        ReadDate = SpawnDate,
+        LarvalAge = 0,
+        NoSet = 0, NoNotSet = 10, NoAlive = 10
+    )
+data <- data.1 %>%
+    bind_rows(data.2) %>%
     mutate(Species = factor(Species),
            Family = factor(Family),
            SpecificTreatment = factor(SpecificTreatment))
+
+## data <- data %>%
+##     mutate(Plate = paste0(SpawnDate, LarvalAge, Plate)) %>%
+##     filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
+##     droplevels() %>%
+    
+##     group_by(Species, SpecificTreatment, SpawnDate) %>%
+##     summarise(data = list(cur_data_all()), .groups = "drop") %>%
+##     mutate(data = map(.x = data,
+##                       .f = ~ {
+##                           d <- .x %>%
+##                               group_by(LarvalAge) %>%
+##                               mutate(Count = n()) %>%
+##                               dplyr::select(-ReadDate, -Plate, -DateAgePlate,
+##                                             -AgePlate, -Well, -Rep, -NoSet, -NoNotSet,
+##                                             -NoAlive, -TargetTotal, Q1, Q2) %>%
+##                               distinct() %>%
+##                               ungroup() %>% 
+##                               ##filter(LarvalAge == min(LarvalAge)) %>%
+##                               mutate(ReadDate = SpawnDate,
+##                                      ## use distinct LarvalAge as a proxy for plate
+##                                      Plate = paste0(ReadDate, " _ ", 0, " _ ", LarvalAge),
+##                                      LarvalAge = 0,
+##                                      NoSet = 0, NoNotSet = 10
+##                                      )
+##                           .x %>% bind_rows(d)
+##                           }
+##                       )) %>%
+##     dplyr::select(data) %>%
+##     unnest(c(data)) %>% 
+##     ungroup() %>%
+##     mutate(Species = factor(Species),
+##            Family = factor(Family),
+##            SpecificTreatment = factor(SpecificTreatment))
+    
+## Old attemp
+## data.lookup <- data %>%
+##     filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
+##     droplevels() %>%
+##     group_by(Species, SpecificTreatment) %>%
+##     tidyr::expand(Plate) %>% 
+##     mutate(LarvalAge = 0, NoSet = 0, NoNotSet = 10)
+
+## data <- data %>%
+##     filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
+##     droplevels() %>%
+##     full_join(data.lookup) %>% 
+##     mutate(Species = factor(Species),
+##            Family = factor(Family),
+##            SpecificTreatment = factor(SpecificTreatment))
 save(data, file = '../data/processed/data.RData')
 ## ----end
 
@@ -44,6 +102,11 @@ data %>% filter(Species == 'Agla',
 
 ## ---- EDA
 g <- data %>%
+    left_join(speciesAbbrev %>%
+              dplyr::select(Species1 = Species,
+                            Species = Abbreviation)) %>%
+    dplyr::select(-Species) %>%
+    dplyr::rename(Species = Species1) %>%
     ## filter(Species == "Aaus",
     ##        !SpecificTreatment %in% c("control")) %>%
     ## droplevels() %>%

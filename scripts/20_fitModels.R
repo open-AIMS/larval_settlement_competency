@@ -10,17 +10,24 @@ load(file = '../data/processed/data.RData')
     for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
 
         ## Prepare the data
-        ## 1. Score an observation as either 1 (proportion
+        ## 1. Filter to just those observations deemed to part of
+        ##    Q1 analyses
+        ## 2. Ensure that Species levels are alphebetical
+        ## 3. Score an observation as either 1 (proportion
         ##    settled greater than threshold) or 0 (not greater)
-        ## 2. For each species, treatment and plate
+        ## 4. For each species, treatment and plate
         ##     - sort by Larval age
         ##     - score settlement as 1 (has currently or previously
         ##       obtained a settlement proportion greater than the
         ##       threshold) or 0 (has not)
-        ## 3. Establish analysis nesting (on Species)
+        ## 5. Establish analysis nesting (on Species)
+        ## 6. Sort the data nest by Species 
 
         ## ---- prepareDataQ1
         data.q1 <- data %>%
+            filter(Q1 == 'Y') %>%
+            droplevels() %>% 
+            mutate(Species = factor(Species, levels = sort(unique(data$Species)))) %>%
             mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 
             group_by(Species, SpecificTreatment, Plate) %>%
             arrange(LarvalAge) %>%
@@ -28,7 +35,8 @@ load(file = '../data/processed/data.RData')
                    Settlement = ifelse(cumsumSettle>0, 1, 0)) %>%
             ungroup() %>%
             group_by(Species) %>%
-            nest()
+            nest() %>%
+            arrange(Species)
 
         ## remove peptile and extract - A.N. suggestion
         data.q1 <- data.q1 %>%

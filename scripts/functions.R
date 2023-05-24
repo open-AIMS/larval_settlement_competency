@@ -35,15 +35,15 @@ EDA <- function(dat) {
                 formula = y ~ s(x, bs = "cs"),
                 method.args = list(family = 'binomial'),
                 se = FALSE) +
-        geom_line(data = dat,
-                  stat = 'summary',
-                  fun.y = 'mean',
-                  aes(y = NoSet/(NoSet + NoNotSet),
-                      x = LarvalAge,
-                      colour = SpecificTreatment,
-                      group = interaction(SpecificTreatment, factor(Plate))),
-                  inherit.aes = FALSE,
-                  alpha = 0.5) + 
+        ## geom_line(data = dat,
+        ##           stat = 'summary',
+        ##           fun.y = 'mean',
+        ##           aes(y = NoSet/(NoSet + NoNotSet),
+        ##               x = LarvalAge,
+        ##               colour = SpecificTreatment,
+        ##               group = interaction(SpecificTreatment, factor(Plate))),
+        ##           inherit.aes = FALSE,
+        ##           alpha = 0.5) + 
         scale_y_continuous('Settlement (%)', label = scales::label_percent()) +
         scale_x_continuous('Larval age (d)') +
         scale_colour_discrete('Treatment') +
@@ -55,15 +55,18 @@ EDA <- function(dat) {
         geom_smooth(method = 'glm',
                     method.args = list(family = 'binomial'),
                     se = FALSE) +
-        geom_line(data = dat,
-                  stat = 'summary',
-                  fun.y = 'mean',
-                  aes(y = Settlement,
-                      x = LarvalAge,
-                      colour = SpecificTreatment,
-                      group = interaction(SpecificTreatment, factor(Plate))),
-                  inherit.aes = FALSE,
-                  alpha = 0.5) + 
+        ## geom_line(data = dat,
+        ##           stat = 'summary',
+        ##           fun.y = 'mean',
+        ##           aes(y = Settlement,
+        ##               x = LarvalAge,
+        ##               colour = SpecificTreatment,
+        ##               group = interaction(SpecificTreatment, factor(Plate))),
+        ##           inherit.aes = FALSE,
+        ##           alpha = 0.5) + 
+        scale_x_continuous('Larval age (d)') +
+        scale_colour_discrete('Treatment') +
+        scale_shape_discrete('Above threshold\nsettlement (cumm.)', breaks = c(0,1), labels = c('FALSE','TRUE')) +
         theme_classic()
     g1/g2
 }
@@ -130,7 +133,9 @@ DHARMa <- function(mod) {
         fittedPredictedResponse = apply(preds, 2, median),
         integerResponse = FALSE
     )
-    wrap_elements(~plot(mod.resids))
+    wrap_elements(~testUniformity(mod.resids)) +
+        wrap_elements(~plotResiduals(mod.resids)) +
+        wrap_elements(~testDispersion(mod.resids))
 }
 ## ----end
 
@@ -144,7 +149,9 @@ DHARMaQ2 <- function(mod) {
         fittedPredictedResponse = apply(preds, 2, median),
         integerResponse = FALSE
     )
-    wrap_elements(~plot(mod.resids))
+    wrap_elements(~testUniformity(mod.resids)) +
+        wrap_elements(~plotResiduals(mod.resids)) +
+        wrap_elements(~testDispersion(mod.resids))
 }
 ## ----end
 ## ----functionSumTable
@@ -201,15 +208,15 @@ AUC <- function(mod) {
 ## ----end
 
 ## ---- functionAUCPlot
-AUCplot <- function(x) {
+AUCplot <- function(x, spec_treat_levels) {
     x %>%
         ggplot(aes(colour = SpecificTreatment,
                    fill = SpecificTreatment,
                    x = Area)) +
-        stat_halfeye(alpha = 0.3) +
+        stat_halfeye(alpha = 0.3, normalize = "groups") +
         scale_x_continuous('Area under curve') +
-        scale_fill_discrete('Inducer') +
-        scale_colour_discrete('Inducer') +
+        scale_fill_discrete('Inducer', limits = spec_treat_levels) +
+        scale_colour_discrete('Inducer', limits = spec_treat_levels) +
         theme_classic() +
         ## scale_y_continuous('',expand = c(0,0)) +
         theme(axis.text.y = element_blank(),
@@ -332,7 +339,10 @@ AUC_ratio_plot <- function(x) {
 
 ## ----functionPartialPlot
 ## The following function produces a simple partial plot
-partialPlot <- function(pred, T=NULL, limits = c('CCA','control','disc', 'rubble')) {
+partialPlot <- function(pred, species, T=NULL, limits = c('CCA','control','disc', 'rubble')) {
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    SP <- speciesAbbrev %>% filter(Abbreviation == species) %>% pull(Species) %>% unique()
+
     pred %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
@@ -341,10 +351,11 @@ partialPlot <- function(pred, T=NULL, limits = c('CCA','control','disc', 'rubble
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
         scale_fill_discrete('Inducer',limits = limits) +
         scale_colour_discrete('Inducer',limits = limits) +
-        scale_x_continuous('Larval age') +
+        scale_x_continuous('Larval age (days)') +
         {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) } + 
         {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob'),25)) } + 
         geom_line() +
+        ggtitle(SP) +
         theme_classic()
 }
 ## ----end
@@ -361,6 +372,71 @@ partial_plot_compilations <- function(path, g, ncol = 3, dpi = 100) {
      n_patches <- length(gw$patches$plots) + 1
      dims <- wrap_dims(n_patches, ncol = ncol, nrow = NULL)
      ggsave(path, gw, width = 4*dims[2], height = 3*dims[1], dpi = dpi)
+}
+## ----end
+
+## ---- functionCompilationNew
+partial_plot_compilations_new <- function(path, dat.mod, ncol = 3, dpi = 100,
+                                          legend.position = "bottom",
+                                          legend.direction = "horizontal",
+                                          legend.justification = c(0.5, 0.5)) {
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    
+    data.compilation <- dat.mod %>%
+        dplyr::select(Species, Partials) %>%
+        unnest(Partials) %>%
+        ungroup() %>%
+        left_join(data.q1.mod %>%
+                  dplyr::select(LD50tab) %>%
+                  unnest(LD50tab) %>%
+                  dplyr::select(SpecificTreatment = Variable,
+                                LD50)) %>%
+        left_join(speciesAbbrev %>%
+                  dplyr::select(Species1 = Species,
+                                Species = Abbreviation)) %>%
+        dplyr::select(-Species) %>%
+        dplyr::rename(Species = Species1)
+    ld50 <- data.compilation %>%
+        group_by(Species, SpecificTreatment) %>%
+        summarise(LD50 = mean(LD50)) %>%
+        ungroup() %>%
+        group_by(Species) %>%
+        summarise(SpecificTreatment = SpecificTreatment[which.min(LD50)],
+                  LD50 = min(LD50))
+    
+        
+    
+    limits = c('CCA','control','disc', 'rubble')
+    g <- data.compilation %>%
+        ggplot(aes(y = prob,
+                   x = LarvalAge,
+                   colour = SpecificTreatment,
+                   fill = SpecificTreatment)) +
+        geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
+        scale_fill_discrete('Inducer',limits = limits) +
+        scale_colour_discrete('Inducer',limits = limits) +
+        scale_x_continuous('Larval age (days)') +
+        scale_y_continuous(paste0('Cohort settlement probability (P>',thresholdProp,')')) + 
+        geom_line() +
+        geom_vline(data = ld50, aes(xintercept = LD50, colour = SpecificTreatment),
+                   linetype = 'dashed', show.legend = FALSE) + 
+        facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
+                   scales = 'free_x', ncol = ncol) +
+        theme_classic() +
+        theme(
+            legend.position = legend.position,
+            legend.direction = legend.direction,
+            legend.justification = legend.justification,
+            axis.title.y = element_text(margin = margin(0, r = 10, unit = "pt")),
+            axis.title.x = element_text(margin = margin(0, t = 10, unit = "pt")),
+            strip.background = element_blank()) +
+        guides(
+            fill = "none",
+            colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+    ## n_patches <- length(g$patches$plots) + 1
+    n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
+    dims <- wrap_dims(n_panels, ncol = ncol, nrow = NULL)
+    ggsave(path, g, width = 2*dims[2], height = 1.5*dims[1], dpi = dpi)
 }
 ## ----end
 
@@ -438,10 +514,12 @@ pairwiseTests <- function(coefs, exponentiate = FALSE, k, varnames, comp.value =
     if (exponentiate) x <- x %>% exp()
     colnames(x) <- rnames
     x %>% as.data.frame() %>%
-        summarise_draws(median,
+        summarise_draws(median = ~median(.x, na.rm = TRUE),
                         HDInterval::hdi,
-                        `P>0` = ~ sum(.x > comp.value)/length(.x),
-                        `P<0` = ~ sum(.x < comp.value)/length(.x))
+                        ## `P>0` = ~ sum(.x > comp.value)/length(.x),
+                        ## `P<0` = ~ sum(.x < comp.value)/length(.x))
+                        `P>0` = ~ mean(.x > comp.value, na.rm = TRUE),
+                        `P<0` = ~ mean(.x < comp.value, na.rm = TRUE))
 }
 ## ----end
 
@@ -488,5 +566,115 @@ fitModelQ2 <- function(dat) {
                 control = list(adapt_delta = 0.99, max_treedepth = 20),
                 backend = 'cmdstanr')
     mod
+}
+## ----end
+
+## ---- functionCompilationQ2Area
+partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100,
+                                          legend.position = "bottom",
+                                          legend.direction = "horizontal",
+                                          legend.justification = c(0.5, 0.5)) {
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    
+    data.compilation <- dat.mod %>%
+        dplyr::select(Species, Partials) %>%
+        unnest(Partials) %>%
+        ungroup() %>%
+        left_join(speciesAbbrev %>%
+                  dplyr::select(Species1 = Species,
+                                Species = Abbreviation)) %>%
+        dplyr::select(-Species) %>%
+        dplyr::rename(Species = Species1)
+    
+    ## limits = c('CCA','control','disc', 'rubble')
+    limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+
+    g <- data.compilation %>%
+        ggplot(aes(y = prob,
+                   x = LarvalAge,
+                   colour = SpecificTreatment,
+                   fill = SpecificTreatment)) +
+        geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
+        geom_line() +
+        scale_x_continuous('Larval age (days)') +
+        scale_y_continuous('Cohort settlement probability') +
+        scale_fill_discrete('Inducer', limits = limits) +
+        scale_colour_discrete('Inducer', limits = limits) +
+        facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
+                   scales = 'free_x', ncol = ncol) +
+        theme_classic() +
+        ## scale_y_continuous('',expand = c(0,0)) +
+        theme(legend.position = legend.position,
+              legend.direction = legend.direction,
+              legend.justification = legend.justification,
+              axis.title.y = element_text(margin = margin(0, r = 10, unit = "pt")),
+              axis.title.x = element_text(margin = margin(0, t = 10, unit = "pt")),
+              strip.background = element_blank()) +
+        guides(
+            fill = "none",
+            colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+    ## n_patches <- length(g$patches$plots) + 1
+    n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
+    dims <- wrap_dims(n_panels, ncol = ncol, nrow = NULL)
+    if (ncol == 5) {
+        ggsave(path, g, width = 2*dims[2], height = (1.5*dims[1]) + 2, dpi = dpi)
+    } else {
+        ggsave(path, g, width = 2*dims[2], height = 1.5*dims[1], dpi = dpi)
+    }
+}
+## ----end
+
+## ---- functionCompilationQ2AreaPosteriors
+partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3, dpi = 100,
+                                          legend.position = "bottom",
+                                          legend.direction = "horizontal",
+                                          legend.justification = c(0.5, 0.5)) {
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    
+    data.compilation <- dat.mod %>%
+        dplyr::select(Species, AreaUnderCurve) %>%
+        unnest(AreaUnderCurve) %>%
+        ungroup() %>%
+        left_join(speciesAbbrev %>%
+                  dplyr::select(Species1 = Species,
+                                Species = Abbreviation)) %>%
+        dplyr::select(-Species) %>%
+        dplyr::rename(Species = Species1)
+    
+    ## limits = c('CCA','control','disc', 'rubble')
+    limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+
+    g <- data.compilation %>%
+        ggplot(aes(x = Area,
+                   colour = SpecificTreatment,
+                   fill = SpecificTreatment)) +
+        stat_halfeye(alpha = 0.3, normalize = "groups") +
+        scale_x_continuous('Area under curve') +
+        scale_fill_discrete('Inducer', limits = limits) +
+        scale_colour_discrete('Inducer', limits = limits) +
+        facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
+                   scales = 'free_x', ncol = ncol) +
+        theme_classic() +
+        ## scale_y_continuous('',expand = c(0,0)) +
+        theme(
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            legend.position = legend.position,
+            legend.direction = legend.direction,
+            legend.justification = legend.justification,
+            axis.title.x = element_text(margin = margin(0, t = 10, unit = "pt")),
+            strip.background = element_blank()) +
+        guides(
+            ## fill = "none",
+            colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+    ## n_patches <- length(g$patches$plots) + 1
+    n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
+    dims <- wrap_dims(n_panels, ncol = ncol, nrow = NULL)
+    if (ncol == 5) {
+        ggsave(path, g, width = 2*dims[2], height = (1.5*dims[1]) + 2, dpi = dpi)
+    } else {
+        ggsave(path, g, width = 2*dims[2], height = 1.5*dims[1], dpi = dpi)
+    }
 }
 ## ----end

@@ -45,11 +45,11 @@ source('functions.R')
         data.q1.mod <- data.q1.mod %>%
             mutate(DHARMa = purrr::map(.x = Mod, .f = DHARMa))
         map2(paste0(OUTPUT_PATH, "figures/DHARMa_",data.q1.mod$Species,"__",thresholdProp,"_.pdf"),
-             data.q1.mod$DHARMa, ggsave, width = 12, height = 6)
+             data.q1.mod$DHARMa, ggsave, width = 12, height = 4)
         map2(paste0(OUTPUT_PATH, "figures/DHARMa_",data.q1.mod$Species,"__",thresholdProp,"_.png"),
-             data.q1.mod$DHARMa, ggsave, width = 12, height = 6, dpi = 72)
+             data.q1.mod$DHARMa, ggsave, width = 12, height = 4, dpi = 72)
         map2(paste0(OUTPUT_PATH, "figures/DHARMa_",data.q1.mod$Species,"__",thresholdProp,"_large_.png"),
-             data.q1.mod$DHARMa, ggsave, width = 12, height = 6, dpi = 300)
+             data.q1.mod$DHARMa, ggsave, width = 12, height = 4, dpi = 300)
         ## ----end
 
         ## ---- save Model Validations

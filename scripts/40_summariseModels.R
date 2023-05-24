@@ -20,8 +20,8 @@ source('functions.R')
         ## data.q1.mod <- data.q1.mod %>%
         ##     mutate(PartialPlot = purrr::map(.x = Partials, .f = partialPlot))
         data.q1.mod <- data.q1.mod %>%
-            mutate(PartialPlot = purrr::map(.x = Partials,
-                                            .f = ~ partialPlot(.x, T = thresholdProp)))
+            mutate(PartialPlot = purrr::map2(.x = Partials, .y = Species,
+                                            .f = ~ partialPlot(.x, .y, T = thresholdProp)))
         save(data.q1.mod, file = paste0('../data/modelled/data.q1__', thresholdProp, '.partials.RData'))
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q1.mod$Species,"__",thresholdProp,"_.pdf"),
              data.q1.mod$PartialPlot, ggsave, width = 6, height = 4)
@@ -31,21 +31,10 @@ source('functions.R')
              data.q1.mod$PartialPlot, ggsave, width = 6, height = 4, dpi = 300)
         ## ----end
 
-        ## ---- compiliationQ1
-        load(file = paste0('../data/modelled/data.q1__', thresholdProp, '.partials.RData'))
-        data.q1.mod <- data.q1.mod %>%
-            mutate(PartialPlot = purrr::map2(.x = PartialPlot,
-                                             .y = Species,
-                                             .f = ~ .x + ggtitle(.y)))
-        partial_plot_compilations(path=paste0(OUTPUT_PATH,
-                                              "figures/compilation_",
-                                              thresholdProp, "_.png"),
-                                  g=data.q1.mod$PartialPlot,
-                                  ncol = 5, dpi = 72)
-        ## ----end
         
         ## ----LD50Q1
-        mod = data.q1.mod[1,'Mod'][[1]][[1]]
+        load(file = paste0('../data/modelled/data.q1__', thresholdProp, '.partials.RData'))
+        ## mod = data.q1.mod[1,'Mod'][[1]][[1]]
         data.q1.mod <- data.q1.mod %>%
             mutate(LD50 = purrr::map(.x = Mod, .f = LD50),
                    LD50tab = purrr::map(.x = LD50,
@@ -70,7 +59,84 @@ source('functions.R')
                                         .f = oddsRatiodif)
                    )
         ## ----end
+        ## ---- sumTabsQ1
+        sum.tabs.q1 <- data.q1.mod %>%
+            dplyr::select(Species, LD50tab, LD50dif, Oddstab, Oddsdif)
+        save(sum.tabs.q1, file = paste0(DATA_PATH, "modelled/sum.tabs.q1__", thresholdProp, ".RData"))
+        ## ----end
 
+        ## ---- compiliationNewQ1
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_",
+                                              thresholdProp, "_.png"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 4, dpi = 72,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_",
+                                              thresholdProp, "_.pdf"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 4, dpi = 72,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_",
+                                              thresholdProp, "_large_.png"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 4, dpi = 300,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_3cols",
+                                              thresholdProp, "_.png"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 3, dpi = 72,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_3cols",
+                                              thresholdProp, "_.pdf"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 3, dpi = 72,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+        partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
+                                              "figures/partialCompilation_3cols",
+                                              thresholdProp, "_large_.png"),
+                                  dat.mod = data.q1.mod,
+                                  ncol = 3, dpi = 300,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+
+        ## ----end 
+        ## ---- compiliationQ1
+        data.q1.mod <- data.q1.mod %>%
+            mutate(PartialPlot = purrr::map2(.x = PartialPlot,
+                                             .y = Species,
+                                             .f = ~ .x + ggtitle(.y)))
+        partial_plot_compilations(path=paste0(OUTPUT_PATH,
+                                              "figures/compilation_",
+                                              thresholdProp, "_.png"),
+                                  g=data.q1.mod$PartialPlot,
+                                  ncol = 5, dpi = 72)
+        partial_plot_compilations(path=paste0(OUTPUT_PATH,
+                                              "figures/compilation_",
+                                              thresholdProp, "_.pdf"),
+                                  g=data.q1.mod$PartialPlot,
+                                  ncol = 5)
+        partial_plot_compilations(path=paste0(OUTPUT_PATH,
+                                              "figures/compilation_",
+                                              thresholdProp, "_large_.png"),
+                                  g=data.q1.mod$PartialPlot,
+                                  ncol = 5, dpi = 300)
+        ## ----end
 
         ## ----save Model Summaries
         data.q1.mod <- data.q1.mod %>%

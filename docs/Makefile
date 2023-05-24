@@ -12,11 +12,15 @@ HTML_FILE := $(patsubst %.Rmd, %.html, $(DOCS_FILE))
 $(info ************************************)
 $(info DOCS Source directory:     $(DOCS_SRC_DIR))
 $(info DOCS Source files:         $(DOCS_FILE))
+$(info HTML output files:         $(HTML_FILE))
 $(info ************************************)
+
+all: $(HTML_FILE)
 
 # $(HTML_FILE) : %.html : %.qmd
 $(HTML_FILE) : %.html : %.Rmd
 	@echo "Compiling documntation for analyses"
 	$(info Source = $<; Destination = $@)
 	# echo "library(quarto); quarto_render(\"$<\")" | R --no-save --no-restore;
-	echo "library(rmarkdown); render(\"$<\", output_format = \"html_document\")" | R --no-save --no-restore;
+	# echo "library(rmarkdown); render(\"$<\", output_format = \"html_document\")" | R --no-save --no-restore;
+	echo "library(rmarkdown); render(\"$<\", output_format = \"bookdown::html_document2\", clean = FALSE)" | R --no-save --no-restore;

@@ -1,4 +1,5 @@
 source('functions.R')
+thresholdProp <- 0.3
 
 ## Question 2: cue comparison within species
 {
@@ -8,6 +9,8 @@ source('functions.R')
         ## ---- prepareDataQ2
         load(file = '../data/processed/data.RData')
         data.q2 <- data %>%
+            filter(Q2 == "Y") %>%
+            droplevels() %>%
             mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 
             group_by(Species, SpecificTreatment, Plate) %>%
             arrange(LarvalAge) %>%
@@ -99,6 +102,11 @@ source('functions.R')
             mutate(Partials = purrr::map(.x = Mod, .f = partials))
         ## ----end
         ## ---- partialPlotQ2
+        Spec_treat_levels <- data.q2.mod %>%
+            dplyr::select(data) %>%
+            unnest(data) %>%
+            pull(SpecificTreatment) %>%
+            unique()
         data.q2.mod <- data.q2.mod %>%
             mutate(
                 PartialPlot = purrr::map(.x = Partials,
@@ -112,8 +120,57 @@ source('functions.R')
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q2.mod$Species,"__large_.png"),
              data.q2.mod$PartialPlot, ggsave, width = 6, height = 4, dpi = 300)
         ## ----end
+        ## ---- partialCompilationPlot2
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4, dpi = 72,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_large.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4, dpi = 300,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_.pdf"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_5col.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5, dpi = 72,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_5col_large.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5, dpi = 300,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_5col.pdf"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        ## ----end
         ## ---- areaQ2
         load(file = paste0('../data/modelled/data.q2__.partials.RData'))
+        Spec_treat_levels <- data.q2.mod %>%
+            dplyr::select(data) %>%
+            unnest(data) %>%
+            pull(SpecificTreatment) %>%
+            unique()
         data.q2.mod <- data.q2.mod %>%
             mutate(AreaUnderCurve = purrr::map(.x = Mod,
                                                .f = ~ AUC(.x)),
@@ -125,7 +182,7 @@ source('functions.R')
                                                               HDInterval::hdi)
                                           ),
                    Area_plot = purrr::map(.x = AreaUnderCurve,
-                                          .f = ~ AUCplot(.x))
+                                          .f = ~ AUCplot(.x, Spec_treat_levels))
                    )
         map2(paste0(OUTPUT_PATH, "figures/PartialArea_",data.q2.mod$Species,"__.pdf"),
              data.q2.mod$Area_plot, ggsave, width = 6, height = 4)
@@ -135,6 +192,51 @@ source('functions.R')
              data.q2.mod$Area_plot, ggsave, width = 6, height = 4, dpi = 300)
         save(data.q2.mod, file = paste0('../data/modelled/data.q2__.area.RData'))
         ## ----end
+        ## ---- partialAreaPosteriorCompilationPlot2
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4, dpi = 72,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_large.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4, dpi = 300,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_.pdf"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 4,
+                                          legend.position = c(0.625, 0.03),
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_5col.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5, dpi = 72,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_5col_large.png"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5, dpi = 300,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaPosteriorCompilation_5col.pdf"),
+                                          dat.mod = data.q2.mod,
+                                          ncol = 5,
+                                          legend.position = "bottom",
+                                          legend.direction = 'horizontal',
+                                          legend.justification = c(0.5,0))
+        ## ----end
+
         ## x <- data.q2.mod[2,'AreaUnderCurve'][[1]][[1]]
         ## ---- compare_Areas Q2
         load(file = paste0('../data/modelled/data.q2__.area.RData'))
