@@ -678,3 +678,57 @@ partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3
     }
 }
 ## ----end
+
+## ---- functionLD50_compilations
+ LD50_compilations<- function(path, LD50, ncol = 3, dpi = 100,
+                                          legend.position = "bottom",
+                                          legend.direction = "horizontal",
+                                          legend.justification = c(0.5, 0.5)) {
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    
+    data.compilation <- LD50 %>%
+        dplyr::select(Species, data) %>%
+        unnest(data) %>%
+        ungroup() %>%
+        left_join(speciesAbbrev %>%
+                  dplyr::select(Species1 = Species,
+                                Species = Abbreviation)) %>%
+        dplyr::select(-Species) %>%
+        dplyr::rename(Species = Species1)
+
+    g <- data.compilation %>% 
+        ggplot(aes(y = LD50, x = Threshold)) +
+        geom_blank(data = NULL, aes(y = 0, x = 0.1)) +
+        ## geom_point(data = .x %>% filter(Variable == 'control') %>% droplevels(),
+        ##            aes(colour = Variable), position = position_dodge()) +
+        geom_line(data = . %>% filter(Variable != 'control') %>% droplevels(),
+                  aes(colour = Variable), position = position_dodge(width = 0.05)) +
+        geom_pointrange(data = . %>% filter(Variable != 'control') %>% droplevels(),
+                        aes(ymin = .lower, ymax = .upper, colour = Variable),
+                        position = position_dodge(width = 0.05),
+                        show.legend = FALSE) +
+        theme_classic() +
+        scale_x_continuous('Cohort settlement threshold',
+                           breaks = thress) +
+        scale_y_log10('Days to >0.5 settlement probability',
+                           expand = c(0,0)) + 
+        facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
+                   scales = 'free', ncol = ncol) +
+        theme_classic() +
+        theme(
+            legend.position = legend.position,
+            legend.direction = legend.direction,
+            legend.justification = legend.justification,
+            axis.title.y = element_text(margin = margin(0, r = 10, unit = "pt")),
+            axis.title.x = element_text(margin = margin(0, t = 10, unit = "pt")),
+            strip.background = element_blank()) +
+        guides(
+            fill = "none",
+            colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+    ## n_patches <- length(g$patches$plots) + 1
+    n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
+    dims <- wrap_dims(n_panels, ncol = ncol, nrow = NULL)
+    ggsave(path, g, width = 2*dims[2], height = 1.5*dims[1], dpi = dpi)
+
+}
+## ----end

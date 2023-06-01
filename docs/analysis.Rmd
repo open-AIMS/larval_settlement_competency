@@ -497,6 +497,19 @@ for (Sp in Species) {
 }
 ```
 
+## Compilation of Days vs Threshold {.tabset .tabset-faded}
+
+```{r functionLD50_compilations, results='markdown', eval=FALSE}
+```
+
+### 4 column version
+
+![(#fig:CompilationLD50) Modelled days to >0.5 settlement probability against cohort settlement threshold conditional on inducer treatment for each species.  Points represent posterior medians and error bars represent 95% credibility intervals.  Estimates are truncated to exclude durations that are greater than the extent of the experiments.](../output/figures/LD50Compilation_.png)
+
+### 3 column version
+
+![(#fig:CompilationLD503col) Modelled days to >0.5 settlement probability against cohort settlement threshold conditional on inducer treatment for each species.  Points represent posterior medians and error bars represent 95% credibility intervals.  Estimates are truncated to exclude durations that are greater than the extent of the experiments.](../output/figures/LD50Compilation_3cols_.png)
+
 # Question 2: effects of inducer type on settlement compentency {.tabset .tabset-faded}
 
 ```{r GetSpecies, results='markdown', eval=TRUE}
@@ -718,7 +731,7 @@ for (i in 1:length(SPECIES)) {
 ```
 ```{r partialCompilationPlot2, results='markdown', eval=FALSE}
 ```
- 
+   
 ```{r compilationPlotsQ2, results='asis', eval=TRUE, echo = FALSE}
 cat("### 4 column version\n\n")
 cat(paste0("![(#fig:CompilationQ2Area) Modelled cohort settlement probability associated with larval age (days) conditional on inducer treatment for each species. Solid lines represent posterior medians and ribbons represent associated 95% credibility intervals.](../output/figures/partialAreaCompilation_.png) \n\n"))

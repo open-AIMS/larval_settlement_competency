@@ -166,12 +166,19 @@ source('functions.R')
                        Species = SPECIES[i])
         }
         species_list[[SPECIES[i]]] <- do.call('rbind', thresh_list)
+        maxDays <- data.q1.mod[i, 'data'][[1]][[1]] %>% pull(LarvalAge) %>% max()
+        species_list[[SPECIES[i]]] <- species_list[[SPECIES[i]]] %>%
+            mutate(MaxDays = maxDays)
     }
     all_LD50 <- do.call('rbind', species_list) %>%
         group_by(Species) %>%
         nest() %>%
         mutate(data = map(.x = data,
                           .f = ~ .x %>%
+                              ## mutate(across(c(LD50, .lower, .upper),
+                              ##              ~ pmin(.x, MaxDays))) %>%
+                              filter(LD50<MaxDays) %>%
+                              mutate(Flag = LD50<MaxDays) %>%
                               group_by(Threshold) %>%
                               bind_rows(group_by(., Threshold) %>%
                                         summarise(
@@ -182,7 +189,8 @@ source('functions.R')
                                             LD50 = LD50[which.min(LD50)],
                                            )) %>%
                               arrange(Threshold, Variable) %>%
-                              ungroup()
+                              ungroup() %>%
+                              mutate(MaxY = max(.upper[which(Flag)]))
                           )
                )
 
@@ -202,8 +210,10 @@ source('functions.R')
                            theme_classic() +
                            scale_x_continuous('Cohort settlement threshold',
                                               breaks = thress) +
+                           ## scale_y_continuous('Days to >0.5 settlement probability') +
                            scale_y_continuous('Days to >0.5 settlement probability',
-                                              expand = c(0,0))
+                                              expand = c(0,0)) 
+                           ## coord_cartesian(ylim = c(min(.$.lower), unique(.$MaxY)), clip = "off")
                        )
                )
     save(all_LD50, file = paste0("../data/modelled/all_LD50.RData"))
@@ -220,5 +230,50 @@ source('functions.R')
                }
                )
     ## ----end
+
+    ## ---- compiliationLD50Q1
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_.png"),
+                                  LD50 = all_LD50,
+                                  ncol = 4, dpi = 72,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_.pdf"),
+                                  LD50 = all_LD50,
+                                  ncol = 4,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_large_.png"),
+                                  LD50 = all_LD50,
+                                  ncol = 4, dpi = 300,
+                                  legend.position = c(0.625, 0.03),
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_3cols_.png"),
+                                  LD50 = all_LD50,
+                                  ncol = 3, dpi = 72,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_3cols_.pdf"),
+                                  LD50 = all_LD50,
+                                  ncol = 3,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
+    LD50_compilations(path=paste0(OUTPUT_PATH,
+                                  "figures/LD50Compilation_3cols_large_.png"),
+                                  LD50 = all_LD50,
+                                  ncol = 3, dpi = 300,
+                                  legend.position = 'bottom',
+                                  legend.direction = 'horizontal',
+                                  legend.justification = c(0.5,0))
 }
 

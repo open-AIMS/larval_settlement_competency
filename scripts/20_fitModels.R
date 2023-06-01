@@ -29,7 +29,8 @@ load(file = '../data/processed/data.RData')
             droplevels() %>% 
             mutate(Species = factor(Species, levels = sort(unique(data$Species)))) %>%
             mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 
-            group_by(Species, SpecificTreatment, Plate) %>%
+            ## group_by(Species, SpecificTreatment, Plate) %>%
+            group_by(Species, SpecificTreatment) %>%
             arrange(LarvalAge) %>%
             mutate(cumsumSettle = cumsum(Settle),
                    Settlement = ifelse(cumsumSettle>0, 1, 0)) %>%
