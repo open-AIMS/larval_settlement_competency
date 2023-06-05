@@ -7,10 +7,11 @@ source('40_summariseModels.R')
 source('50_cue_comparisons.R')
 
 zip("../output/analysis.zip",
+    flags = "-rj9X",
     files = c("../docs/analysis.html",
               "../output/figures/partialCompilation_3cols0.3_.pdf",
               "../output/figures/LD50Compilation_3cols_.pdf",
-              "../output/figures/partialAreaCompilation_4col_.pdf",
+              "../output/figures/partialAreaCompilation_.pdf",
               "../output/figures/partialAreaPosteriorCompilation_.pdf"
               )
     )
