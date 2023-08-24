@@ -120,7 +120,22 @@ thresholdProp <- 0.3
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q2.mod$Species,"__large_.png"),
              data.q2.mod$PartialPlot, ggsave, width = 6, height = 4, dpi = 300)
         ## ----end
+        ## ---- partialCompilationPlot2Carly
+        load(file = paste0('../data/modelled/data.q2__.partials.RData'))
+        partial_plot_compilations_Q2_Area_carly(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_Carly.png"),
+                                          dat.mod = data.q2.mod,
+                                          dpi = 72)
+        partial_plot_compilations_Q2_Area_carly(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_Carly_large.png"),
+                                          dat.mod = data.q2.mod,
+                                          dpi = 300)
+        partial_plot_compilations_Q2_Area_carly(path=paste0(OUTPUT_PATH,
+                                                      "figures/partialAreaCompilation_Carly.pdf"),
+                                          dat.mod = data.q2.mod)
+        ## ----end
         ## ---- partialCompilationPlot2
+        load(file = paste0('../data/modelled/data.q2__.partials.RData'))
         partial_plot_compilations_Q2_Area(path=paste0(OUTPUT_PATH,
                                                       "figures/partialAreaCompilation_.png"),
                                           dat.mod = data.q2.mod,
@@ -193,6 +208,7 @@ thresholdProp <- 0.3
         save(data.q2.mod, file = paste0('../data/modelled/data.q2__.area.RData'))
         ## ----end
         ## ---- partialAreaPosteriorCompilationPlot2
+        load(file = paste0('../data/modelled/data.q2__.area.RData'))
         partial_plot_compilations_Q2_Area_posteriors(path=paste0(OUTPUT_PATH,
                                                       "figures/partialAreaPosteriorCompilation_.png"),
                                           dat.mod = data.q2.mod,

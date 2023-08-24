@@ -378,7 +378,7 @@ differences are presented in units of age and thus:
 ```{r LD50Q1, results='markdown', eval=FALSE}
 ```
 
-```{r LD50TablesQ1, results='asis', eval=TRUE, echo = FALSE, cache = TRUE, cache.comments = FALSE, tidy.opts = NULL}
+```{r LD50TablesQ1, results='asis', eval=TRUE, echo = FALSE, cache = FALSE, cache.comments = FALSE, tidy.opts = NULL}
 files <- list.files(path = paste0(DATA_PATH, "modelled"),
                     pattern = "data.q1.*mod_sum.RData",
                     full.names = TRUE)
@@ -434,7 +434,7 @@ ratio scale:
 ```{r sumTabsQ1, results='markdown', eval=FALSE}
 ```
 
-```{r oddsTablesQ1, results='asis', eval=TRUE, echo = FALSE, cache = TRUE, cache.comments = FALSE, tidy.opts = NULL}
+```{r oddsTablesQ1, results='asis', eval=TRUE, echo = FALSE, cache = FALSE, cache.comments = FALSE, tidy.opts = NULL}
 files <- list.files(path = paste0(DATA_PATH, "modelled"),
                     pattern = "data.q1.*mod_sum.RData",
                     full.names = TRUE) 

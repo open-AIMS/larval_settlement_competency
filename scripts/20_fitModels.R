@@ -26,6 +26,7 @@ load(file = '../data/processed/data.RData')
         ## ---- prepareDataQ1
         data.q1 <- data %>%
             filter(Q1 == 'Y') %>%
+            filter(!(NoSet ==0 & NoNotSet ==0)) %>% # exclude cases where there were no larvae
             droplevels() %>% 
             mutate(Species = factor(Species, levels = sort(unique(data$Species)))) %>%
             mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 

@@ -232,6 +232,7 @@ source('functions.R')
     ## ----end
 
     ## ---- compiliationLD50Q1
+    load(file = paste0("../data/modelled/all_LD50.RData"))
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_.png"),
                                   LD50 = all_LD50,

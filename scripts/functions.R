@@ -624,6 +624,168 @@ partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100
 }
 ## ----end
 
+## ---- functionCompilationQ2AreaCarly
+partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
+                                                    ){
+    load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    
+    data.compilation <- dat.mod %>%
+        dplyr::select(Species, Partials) %>%
+        unnest(Partials) %>%
+        ungroup() %>%
+        left_join(speciesAbbrev %>%
+                  dplyr::select(Species1 = Species,
+                                Species = Abbreviation)) %>%
+        dplyr::select(-Species) %>%
+        dplyr::rename(Species = Species1) 
+    
+    ## limits = c('CCA','control','disc', 'rubble')
+    group.lookup <- tribble(
+        ~Species, ~xmax, ~row, ~col,
+        "Acropora intermedia", 25, 1, 1,
+        "Acropora longicyathus", 25, 2, 1,
+        "Acropora loripes", 25, 3, 1,
+        "Acropora tenuis", 25, 4, 1,
+        "Goniastrea retiformis", 25, 5, 1,
+        "Lobophyllia corymbosa", 25, 6, 1,
+        "Lobophyllia hemprichii", 25, 7, 1,
+        "Montipora aequituberculata", 25, 8, 1,
+        "Platygyra daedalea", 25, 9, 1,
+        "Porites cylindrica", 25, 10, 1,
+        "Acropora austera", 40, 1, 2,
+        "Acropora glauca", 40, 2, 2,
+        "Acropora micropthalma", 40, 3, 2,
+        "Acropora millepora", 40, 4, 2,
+        "Acropora muricata", 40, 5, 2,
+        "Acropora hyacinthus", 80, 6, 2,
+        "Dipsastraea matthaii", 80, 7, 2,
+        "Dipsastraea pallida", 80, 8, 2,
+        "Mycedium elephantotus", 80, 9, 2,
+        "Oulophyllia crispa", 80, 10, 2,
+        "Diploastrea heliopora", 40, 1, 3,
+        "Galaxea fascicularis", 40, 2, 3,
+        "Montipora digitata", 40, 3, 3,
+        "Porites lobata", 40, 4, 3,
+        )
+    layout <- c(
+        area(t=1, l=1,b=1,r=1),
+        area(t=2, l=1,b=2,r=1),
+        area(t=3, l=1,b=3,r=1),
+        area(t=4, l=1,b=4,r=1),
+        area(t=5, l=1,b=5,r=1),
+        area(t=6, l=1,b=6,r=1),
+        area(t=7, l=1,b=7,r=1),
+        area(t=8, l=1,b=8,r=1),
+        area(t=9, l=1,b=9,r=1),
+        area(t=10, l=1,b=10,r=1),
+        
+        area(t=1, l=2,b=1,r=2),
+        area(t=2, l=2,b=2,r=2),
+        area(t=3, l=2,b=3,r=2),
+        area(t=4, l=2,b=4,r=2),
+        area(t=5, l=2,b=5,r=2),
+        area(t=6, l=2,b=6,r=3),
+        area(t=7, l=2,b=7,r=3),
+        area(t=8, l=2,b=8,r=3),
+        area(t=9, l=2,b=9,r=3),
+        area(t=10, l=2,b=10,r=3),
+
+        area(t=1, l=3,b=1,r=3),
+        area(t=2, l=3,b=2,r=3),
+        area(t=3, l=3,b=3,r=3),
+        area(t=4, l=3,b=4,r=3)
+        )
+    limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+    data.compilation <- data.compilation %>%
+        mutate(Species = factor(Species, levels = group.lookup$Species))
+    g <- vector('list', length(levels(data.compilation$Species)))
+    names(g) <-  levels(data.compilation$Species)
+    for (sp in levels(data.compilation$Species)) {
+        dat.comp <- data.compilation %>%
+            filter(Species == sp) %>%
+            droplevels()
+        xmax <- group.lookup %>% filter(Species == sp) %>% pull(xmax)
+        g[[sp]] <- dat.comp %>%
+            ggplot(aes(y = prob,
+                       x = LarvalAge,
+                       colour = SpecificTreatment,
+                       fill = SpecificTreatment)) +
+            geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
+            geom_line() +
+            scale_x_continuous('Larval age (days)', limits = c(0, xmax)) +
+            scale_y_continuous('Cohort settlement probability') +
+            scale_fill_discrete('Inducer', limits = limits) +
+            scale_colour_discrete('Inducer', limits = limits) +
+            theme_classic() +
+            ## scale_y_continuous('',expand = c(0,0)) +
+            ggtitle(bquote(italic(.(sp)))) +
+            theme(plot.title = element_text(hjust = 0.5)) +
+            ## theme(legend.position = legend.position,
+            ##       legend.direction = legend.direction,
+            ##       legend.justification = legend.justification,
+            ##       axis.title.y = element_text(margin = margin(0, r = 10, unit = "pt")),
+            ##       axis.title.x = element_text(margin = margin(0, t = 10, unit = "pt")),
+            ##       strip.background = element_blank()) +
+            guides(
+                fill = "none",
+                colour = guide_legend(override.aes = list(shape = NA, size = 0.7))) 
+
+    }
+    ## ggsave("../output/figures/compilationCarly.png", g[[1]], width = 5, height = 3, dpi = 72)
+    ## gg <- wrap_plots(g[[group.lookup[[1,'Species']]]],
+    ##                  g[[group.lookup[[]],
+    ##                  widths = c(25,40)) &
+    ##     theme(axis.title.y = element_blank()) &
+    ##     guides(colour = "none")
+    gg <- wrap_plots(g, design = layout, widths = c(25, 40, 40), byrow = TRUE) &
+        ## plot_layout(guides = 'collect') &
+        theme(axis.title.y = element_blank(),
+              axis.title.x = element_blank()) &
+        guides(colour = "none") 
+        ## labs(tag = "Larval age (days)") +
+        ## theme(plot.tag.position = "bottom") 
+    xaxisplot<-ggplot()+labs(x="Larval age (days)")+theme_classic(base_size = 15)+ 
+        guides(x = "none", y = "none")
+    gg1 <- gg/xaxisplot + plot_layout(heights = c(1000,1))        
+    yaxisplot<-ggplot()+labs(y="Cohort settlement probability")+theme_classic(base_size = 15)+ 
+        guides(x = "none", y = "none")
+    gg2 <- yaxisplot + gg1 + plot_layout(widths= c(1,1000))        
+
+    g_legend <- function(a.gplot){ 
+        tmp <- ggplot_gtable(ggplot_build(a.gplot)) 
+        leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box") 
+        legend <- tmp$grobs[[leg]] 
+        legend
+    } 
+
+    guideplot <- g_legend(g[[1]]+
+                          theme_classic(base_size = 15) +
+                          theme(legend.direction = "horizontal",
+                                plot.margin = margin(0,0,0,0),
+                                plot.background = element_rect(fill = "blue"),
+                                legend.spacing.x = unit(15, 'pt'),
+                                legend.key.size = unit(15, 'pt'),
+                                legend.key.height = unit(20,'pt'),
+                                legend.margin = margin(t=10, r = 10, b = 10, l = 10, unit = 'pt'),
+                                ## legend.margin = margin(0,0,0,0),
+                                legend.box.background = element_rect(fill = "blue")
+                                ))
+    ## guideplot <- g[[1]] + theme_classic() +
+    ##     theme(legend.direction = "horizontal") +
+    ##     guides(x = "none", y = "none")
+    gg3 <- gg2 + inset_element(guideplot, left = 0.62, right = 1, top = 0.62, bottom = 0.52)
+    ggsave(path, gg3, width = 15, height = 15, dpi = 72)
+    
+    ## ## n_patches <- length(g$patches$plots) + 1
+    ## n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
+    ## dims <- wrap_dims(n_panels, ncol = ncol, nrow = NULL)
+    ## if (ncol == 5) {
+    ##     ggsave(path, g, width = 2*dims[2], height = (1.5*dims[1]) + 2, dpi = dpi)
+    ## } else {
+    ##     ggsave(path, g, width = 2*dims[2], height = 1.5*dims[1], dpi = dpi)
+    ## }
+}
+## ----end
 ## ---- functionCompilationQ2AreaPosteriors
 partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3, dpi = 100,
                                           legend.position = "bottom",
