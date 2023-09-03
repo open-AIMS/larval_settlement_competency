@@ -39,6 +39,13 @@ data <- data.1 %>%
            Family = factor(Family),
            SpecificTreatment = factor(SpecificTreatment))
 
+TreatmentOrder <- c("control", "CCA", "rubble", "disc", "extract", "peptide")
+save(TreatmentOrder, file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+TreatmentPalette <- c(control = "gray", CCA = "pink", rubble = "blue", disc = "green",
+                      extract = "purple", peptide = "yellow")
+TreatmentPalette <- scales::hue_pal()(6)[c(2,1,4,3,6,5)]
+names(TreatmentPalette) <- TreatmentOrder
+save(TreatmentPalette, file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
 ## data <- data %>%
 ##     mutate(Plate = paste0(SpawnDate, LarvalAge, Plate)) %>%
 ##     filter(LarvalAge != 0) %>% # exclude previous attempts to set settlement at 0 when age is 0
@@ -102,6 +109,8 @@ data %>% filter(Species == 'Agla',
 
 ## ---- EDA
 g <- data %>%
+    mutate(SpecificTreatment = factor(SpecificTreatment,
+                                      levels = TreatmentOrder)) %>%
     left_join(speciesAbbrev %>%
               dplyr::select(Species1 = Species,
                             Species = Abbreviation)) %>%
@@ -120,7 +129,10 @@ g <- data %>%
                 formula = y ~ s(x, bs = "cs"),
                 method.args = list(family = 'binomial'),
                 se = FALSE) +
-    facet_wrap(~Species, scales = "free")
+    ## scale_colour_viridis_d() +
+    scale_colour_manual("Treatment", breaks = TreatmentOrder, values = TreatmentPalette) +
+    facet_wrap(~Species, scales = "free") +
+    theme_classic()
 ggsave(filename = paste0(OUTPUT_PATH, "figures/EDA.pdf"), g, width = 12, height = 12)
 ggsave(filename = paste0(OUTPUT_PATH, "figures/EDA.png"), g, width = 12, height = 12)
 ## ----end

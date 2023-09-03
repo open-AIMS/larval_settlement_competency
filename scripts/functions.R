@@ -28,7 +28,12 @@ if (!dir.exists(paste0(OUTPUT_PATH, "tables"))) dir.create(paste0(OUTPUT_PATH, "
 ## 1. the raw data against larval age
 ## 2. the settlement (binary) data avainst larval age
 EDA <- function(dat) {
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+
     dat <- dat %>% filter(!is.na(Settlement)) %>% droplevels()
+    treatment_palette <- TreatmentPalette[as.character(unique(dat$SpecificTreatment))]
+    
     g1<-dat %>% ggplot(aes(y = NoSet/(NoSet + NoNotSet), x = LarvalAge, colour = SpecificTreatment)) +
         geom_point(aes(shape = factor(Settlement)), alpha = 0.5) +
         geom_smooth(method = "gam",
@@ -46,7 +51,7 @@ EDA <- function(dat) {
         ##           alpha = 0.5) + 
         scale_y_continuous('Settlement (%)', label = scales::label_percent()) +
         scale_x_continuous('Larval age (d)') +
-        scale_colour_discrete('Treatment') +
+        scale_colour_manual('Treatment',breaks = names(treatment_palette), values = treatment_palette) +
         scale_shape_discrete('Above threshold\nsettlement (cumm.)', breaks = c(0,1), labels = c('FALSE','TRUE')) +
         theme_classic()
 
@@ -65,7 +70,7 @@ EDA <- function(dat) {
         ##           inherit.aes = FALSE,
         ##           alpha = 0.5) + 
         scale_x_continuous('Larval age (d)') +
-        scale_colour_discrete('Treatment') +
+        scale_colour_manual('Treatment',breaks = names(treatment_palette), values = treatment_palette) +
         scale_shape_discrete('Above threshold\nsettlement (cumm.)', breaks = c(0,1), labels = c('FALSE','TRUE')) +
         theme_classic()
     g1/g2
@@ -209,14 +214,25 @@ AUC <- function(mod) {
 
 ## ---- functionAUCPlot
 AUCplot <- function(x, spec_treat_levels) {
+
+    limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- TreatmentPalette[limits]
+
     x %>%
         ggplot(aes(colour = SpecificTreatment,
                    fill = SpecificTreatment,
                    x = Area)) +
         stat_halfeye(alpha = 0.3, normalize = "groups") +
         scale_x_continuous('Area under curve') +
-        scale_fill_discrete('Inducer', limits = spec_treat_levels) +
-        scale_colour_discrete('Inducer', limits = spec_treat_levels) +
+        ## scale_fill_discrete('Inducer', limits = spec_treat_levels) +
+        ## scale_colour_discrete('Inducer', limits = spec_treat_levels) +
+        scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                            values = treatment_palette, limits = limits) +
         theme_classic() +
         ## scale_y_continuous('',expand = c(0,0)) +
         theme(axis.text.y = element_blank(),
@@ -343,14 +359,27 @@ partialPlot <- function(pred, species, T=NULL, limits = c('CCA','control','disc'
     load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
     SP <- speciesAbbrev %>% filter(Abbreviation == species) %>% pull(Species) %>% unique()
 
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    ## treatment_palette <- TreatmentPalette[as.character(unique(pred$SpecificTreatment))]
+    treatment_palette <- TreatmentPalette[limits]
+
+    ## print(paste0("palette=",treatment_palette))
+    ## print(paste0("SpecificTreatments=", unique(pred$SpecificTreatment)))
+    ## print(paste0("limits=",limits))
+    
     pred %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
                    colour = SpecificTreatment,
                    fill = SpecificTreatment)) +
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
-        scale_fill_discrete('Inducer',limits = limits) +
-        scale_colour_discrete('Inducer',limits = limits) +
+        ## scale_fill_discrete('Inducer',limits = limits) +
+        ## scale_colour_discrete('Inducer',limits = limits) +
+        scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
         scale_x_continuous('Larval age (days)') +
         {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) } + 
         {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob'),25)) } + 
@@ -379,8 +408,13 @@ partial_plot_compilations <- function(path, g, ncol = 3, dpi = 100) {
 partial_plot_compilations_new <- function(path, dat.mod, ncol = 3, dpi = 100,
                                           legend.position = "bottom",
                                           legend.direction = "horizontal",
-                                          legend.justification = c(0.5, 0.5)) {
+                                          legend.justification = c(0.5, 0.5),
+                                          limits = c('CCA','control','disc', 'rubble')) {
     load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    ## treatment_palette <- TreatmentPalette[as.character(unique(pred$SpecificTreatment))]
+    treatment_palette <- TreatmentPalette[limits]
     
     data.compilation <- dat.mod %>%
         dplyr::select(Species, Partials) %>%
@@ -405,17 +439,19 @@ partial_plot_compilations_new <- function(path, dat.mod, ncol = 3, dpi = 100,
                   LD50 = min(LD50))
     
         
-    
-    limits = c('CCA','control','disc', 'rubble')
     g <- data.compilation %>%
         ggplot(aes(y = prob,
                    x = LarvalAge,
                    colour = SpecificTreatment,
                    fill = SpecificTreatment)) +
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
-        scale_fill_discrete('Inducer',limits = limits) +
-        scale_colour_discrete('Inducer',limits = limits) +
-        scale_x_continuous('Larval age (days)') +
+        ## scale_fill_discrete('Inducer',limits = limits) +
+        ## scale_colour_discrete('Inducer',limits = limits) +
+        scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_x_continuous('Larval age (days)', limits = c(0, 20)) +
         scale_y_continuous(paste0('Cohort settlement probability (P>',thresholdProp,')')) + 
         geom_line() +
         geom_vline(data = ld50, aes(xintercept = LD50, colour = SpecificTreatment),
@@ -588,6 +624,9 @@ partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100
     
     ## limits = c('CCA','control','disc', 'rubble')
     limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- TreatmentPalette[limits]
 
     g <- data.compilation %>%
         ggplot(aes(y = prob,
@@ -598,8 +637,10 @@ partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100
         geom_line() +
         scale_x_continuous('Larval age (days)') +
         scale_y_continuous('Cohort settlement probability') +
-        scale_fill_discrete('Inducer', limits = limits) +
-        scale_colour_discrete('Inducer', limits = limits) +
+        scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                            values = treatment_palette, limits = limits) +
         facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
                    scales = 'free_x', ncol = ncol) +
         theme_classic() +
@@ -625,7 +666,7 @@ partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100
 ## ----end
 
 ## ---- functionCompilationQ2AreaCarly
-partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
+partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100
                                                     ){
     load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
     
@@ -657,11 +698,11 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
         "Acropora micropthalma", 40, 3, 2,
         "Acropora millepora", 40, 4, 2,
         "Acropora muricata", 40, 5, 2,
-        "Acropora hyacinthus", 80, 6, 2,
-        "Dipsastraea matthaii", 80, 7, 2,
-        "Dipsastraea pallida", 80, 8, 2,
-        "Mycedium elephantotus", 80, 9, 2,
-        "Oulophyllia crispa", 80, 10, 2,
+        "Acropora hyacinthus", 84, 6, 2,
+        "Dipsastraea matthaii", 84, 7, 2,
+        "Dipsastraea pallida", 84, 8, 2,
+        "Mycedium elephantotus", 84, 9, 2,
+        "Oulophyllia crispa", 84, 10, 2,
         "Diploastrea heliopora", 40, 1, 3,
         "Galaxea fascicularis", 40, 2, 3,
         "Montipora digitata", 40, 3, 3,
@@ -696,6 +737,11 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
         area(t=4, l=3,b=4,r=3)
         )
     limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
+
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- TreatmentPalette[limits]
+
     data.compilation <- data.compilation %>%
         mutate(Species = factor(Species, levels = group.lookup$Species))
     g <- vector('list', length(levels(data.compilation$Species)))
@@ -712,10 +758,14 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
                        fill = SpecificTreatment)) +
             geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
             geom_line() +
-            scale_x_continuous('Larval age (days)', limits = c(0, xmax)) +
+            scale_x_continuous('Larval age (days)', limits = c(0, xmax), expand = c(0,0)) +
             scale_y_continuous('Cohort settlement probability') +
-            scale_fill_discrete('Inducer', limits = limits) +
-            scale_colour_discrete('Inducer', limits = limits) +
+            ## scale_fill_discrete('Inducer', limits = limits) +
+            ## scale_colour_discrete('Inducer', limits = limits) +
+            scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                              values = treatment_palette, limits = limits) +
+            scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                                values = treatment_palette, limits = limits) +
             theme_classic() +
             ## scale_y_continuous('',expand = c(0,0)) +
             ggtitle(bquote(italic(.(sp)))) +
@@ -774,7 +824,7 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100,
     ##     theme(legend.direction = "horizontal") +
     ##     guides(x = "none", y = "none")
     gg3 <- gg2 + inset_element(guideplot, left = 0.62, right = 1, top = 0.62, bottom = 0.52)
-    ggsave(path, gg3, width = 15, height = 15, dpi = 72)
+    ggsave(path, gg3, width = 15, height = 20, dpi = 72)
     
     ## ## n_patches <- length(g$patches$plots) + 1
     ## n_panels <- length(unique(ggplot_build(g)$data[[1]]$PANEL))
@@ -806,14 +856,20 @@ partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3
     ## limits = c('CCA','control','disc', 'rubble')
     limits = c('control', 'CCA', 'disc', 'extract', 'peptide', 'rubble')
 
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- TreatmentPalette[limits]
+
     g <- data.compilation %>%
         ggplot(aes(x = Area,
                    colour = SpecificTreatment,
                    fill = SpecificTreatment)) +
         stat_halfeye(alpha = 0.3, normalize = "groups") +
         scale_x_continuous('Area under curve') +
-        scale_fill_discrete('Inducer', limits = limits) +
-        scale_colour_discrete('Inducer', limits = limits) +
+        scale_fill_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                            values = treatment_palette, limits = limits) +
         facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
                    scales = 'free_x', ncol = ncol) +
         theme_classic() +
@@ -843,11 +899,16 @@ partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3
 
 ## ---- functionLD50_compilations
  LD50_compilations<- function(path, LD50, ncol = 3, dpi = 100,
-                                          legend.position = "bottom",
-                                          legend.direction = "horizontal",
-                                          legend.justification = c(0.5, 0.5)) {
+                              legend.position = "bottom",
+                              legend.direction = "horizontal",
+                              legend.justification = c(0.5, 0.5),
+                              limits) {
     load(paste0(DATA_PATH, "processed/Species abbreviations.RData"))
-    
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- c("Best" = "#000000", TreatmentPalette)
+    treatment_palette <- treatment_palette[limits]
+
     data.compilation <- LD50 %>%
         dplyr::select(Species, data) %>%
         unnest(data) %>%
@@ -870,6 +931,10 @@ partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3
                         position = position_dodge(width = 0.05),
                         show.legend = FALSE) +
         theme_classic() +
+        ## scale_fill_manual('Inducer', breaks = names(treatment_palette),
+        ##                   values = treatment_palette, limits = limits) +
+        scale_colour_manual('Inducer', breaks = names(treatment_palette),
+                          values = treatment_palette, limits = limits) +
         scale_x_continuous('Cohort settlement threshold',
                            breaks = thress) +
         scale_y_log10('Days to >0.5 settlement probability',

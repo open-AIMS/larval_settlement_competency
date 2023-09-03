@@ -99,7 +99,11 @@ thresholdProp <- 0.3
         ## ---- partialsQ2
         load(file = paste0("../data/modelled/data.q2.mod.RData"))
         data.q2.mod <- data.q2.mod %>%
-            mutate(Partials = purrr::map(.x = Mod, .f = partials))
+            mutate(Partials = purrr::map(.x = Mod, .f = partials),
+                   Partials = purrr::map(.x = Partials,
+                                         .f = ~ .x %>%
+                                             mutate(SpecificTreatment = factor(SpecificTreatment,
+                                                                               levels = names(TreatmentPalette)))))
         ## ----end
         ## ---- partialPlotQ2
         Spec_treat_levels <- data.q2.mod %>%
@@ -109,8 +113,9 @@ thresholdProp <- 0.3
             unique()
         data.q2.mod <- data.q2.mod %>%
             mutate(
-                PartialPlot = purrr::map(.x = Partials,
-                                         .f = ~ partialPlot(.x, T = NULL,
+                PartialPlot = purrr::map2(.x = Partials,
+                                          .y = Species,
+                                         .f = ~ partialPlot(.x, species = .y, T = NULL,
                                                             limits = c('CCA','control','disc', 'rubble', 'peptide', 'extract'))))
         save(data.q2.mod, file = paste0('../data/modelled/data.q2__.partials.RData'))
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q2.mod$Species,"__.pdf"),

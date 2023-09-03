@@ -21,7 +21,8 @@ source('functions.R')
         ##     mutate(PartialPlot = purrr::map(.x = Partials, .f = partialPlot))
         data.q1.mod <- data.q1.mod %>%
             mutate(PartialPlot = purrr::map2(.x = Partials, .y = Species,
-                                            .f = ~ partialPlot(.x, .y, T = thresholdProp)))
+                                             .f = ~ partialPlot(.x, .y, T = thresholdProp,
+                                                                limits = c('CCA','disc', 'rubble'))))
         save(data.q1.mod, file = paste0('../data/modelled/data.q1__', thresholdProp, '.partials.RData'))
         map2(paste0(OUTPUT_PATH, "figures/PartialPlot_",data.q1.mod$Species,"__",thresholdProp,"_.pdf"),
              data.q1.mod$PartialPlot, ggsave, width = 6, height = 4)
@@ -73,7 +74,8 @@ source('functions.R')
                                   ncol = 4, dpi = 72,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
         partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
                                               "figures/partialCompilation_",
                                               thresholdProp, "_.pdf"),
@@ -81,7 +83,8 @@ source('functions.R')
                                   ncol = 4, dpi = 72,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
         partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
                                               "figures/partialCompilation_",
                                               thresholdProp, "_large_.png"),
@@ -89,7 +92,8 @@ source('functions.R')
                                   ncol = 4, dpi = 300,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
         partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
                                               "figures/partialCompilation_3cols",
                                               thresholdProp, "_.png"),
@@ -97,7 +101,8 @@ source('functions.R')
                                   ncol = 3, dpi = 72,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
         partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
                                               "figures/partialCompilation_3cols",
                                               thresholdProp, "_.pdf"),
@@ -105,7 +110,8 @@ source('functions.R')
                                   ncol = 3, dpi = 72,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
         partial_plot_compilations_new(path=paste0(OUTPUT_PATH,
                                               "figures/partialCompilation_3cols",
                                               thresholdProp, "_large_.png"),
@@ -113,7 +119,8 @@ source('functions.R')
                                   ncol = 3, dpi = 300,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('CCA','disc', 'rubble'))
 
         ## ----end 
         ## ---- compiliationQ1
@@ -157,6 +164,7 @@ source('functions.R')
                              SPECIES)
     thress <- seq(0.1, 0.9, by = 0.1)
     for (i in 1:length(SPECIES)) {
+        print(paste0("Species = ", SPECIES[i]))
         thresh_list <- setNames(vector('list', length = length(thress)),
                                 thress)
         for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
@@ -193,6 +201,11 @@ source('functions.R')
                               mutate(MaxY = max(.upper[which(Flag)]))
                           )
                )
+    
+    load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
+    load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+    treatment_palette <- c("Best" = "#000000", TreatmentPalette)
+    treatment_palette <- treatment_palette[c("Best","CCA", "disc", "rubble")]
 
     all_LD50 <- all_LD50 %>%
         mutate(g = map(.x = data,
@@ -207,6 +220,8 @@ source('functions.R')
                            geom_pointrange(data = . %>% filter(Variable != 'control') %>% droplevels(),
                                            aes(ymin = .lower, ymax = .upper, colour = Variable),
                                            position = position_dodge(width = 0.05)) +
+                           scale_colour_manual("Inducer", breaks = names(treatment_palette),
+                                               values = treatment_palette) +
                            theme_classic() +
                            scale_x_continuous('Cohort settlement threshold',
                                               breaks = thress) +
@@ -239,21 +254,24 @@ source('functions.R')
                                   ncol = 4, dpi = 72,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_.pdf"),
                                   LD50 = all_LD50,
                                   ncol = 4,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_large_.png"),
                                   LD50 = all_LD50,
                                   ncol = 4, dpi = 300,
                                   legend.position = c(0.625, 0.03),
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
 
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_3cols_.png"),
@@ -261,20 +279,23 @@ source('functions.R')
                                   ncol = 3, dpi = 72,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_3cols_.pdf"),
                                   LD50 = all_LD50,
                                   ncol = 3,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
     LD50_compilations(path=paste0(OUTPUT_PATH,
                                   "figures/LD50Compilation_3cols_large_.png"),
                                   LD50 = all_LD50,
                                   ncol = 3, dpi = 300,
                                   legend.position = 'bottom',
                                   legend.direction = 'horizontal',
-                                  legend.justification = c(0.5,0))
+                                  legend.justification = c(0.5,0),
+                                  limits = c('Best','CCA','disc', 'rubble'))
 }
 

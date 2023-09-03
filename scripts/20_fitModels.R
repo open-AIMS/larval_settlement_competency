@@ -8,7 +8,7 @@ load(file = '../data/processed/data.RData')
 {
     ## ---- Analysis loop
     for (thresholdProp in seq(0.1, 0.9, by = 0.1)) {
-
+        print(paste0("Thresholdprop = ", thresholdProp))
         ## Prepare the data
         ## 1. Filter to just those observations deemed to part of
         ##    Q1 analyses
@@ -29,6 +29,7 @@ load(file = '../data/processed/data.RData')
             filter(!(NoSet ==0 & NoNotSet ==0)) %>% # exclude cases where there were no larvae
             droplevels() %>% 
             mutate(Species = factor(Species, levels = sort(unique(data$Species)))) %>%
+            mutate(FractionSettled = as.numeric(NoSet/(NoSet + NoNotSet))) %>%
             mutate(Settle = as.numeric(NoSet/(NoSet + NoNotSet) > thresholdProp)) %>% 
             ## group_by(Species, SpecificTreatment, Plate) %>%
             group_by(Species, SpecificTreatment) %>%
@@ -45,7 +46,7 @@ load(file = '../data/processed/data.RData')
             mutate(data.sub = map(.x = data,
                                   .f = function(x) {
                                       x %>%
-                                          filter(!SpecificTreatment %in% c('peptide','extract')) %>%
+                                          filter(!SpecificTreatment %in% c('peptide','extract', 'control')) %>%
                                           droplevels()
                                   }))
         ## ----end
@@ -68,7 +69,12 @@ load(file = '../data/processed/data.RData')
         ## ---- fitModelQ1
         data.q1.mod <- data.q1 %>%
             ## filter(Species == 'Agla') %>%  droplevels() %>% 
-            mutate(Mod = purrr::map(.x = data.sub, .f = fitModel))
+            mutate(Mod = purrr::map(.x = data.sub,
+                                    .f = ~ {
+                                       print(unique(data.sub$Family)) 
+                                       fitModel(.x)
+                                    }
+                                    ))
         ## ----end
 
         ## ---- save Models

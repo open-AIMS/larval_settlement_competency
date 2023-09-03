@@ -30,7 +30,7 @@ output:
 output_dir: "docs"
 bibliography: references.bib
 ---
-
+ 
 ```{r setup, include=FALSE}
 assignInNamespace('.sep.label',  "^\\ *(#|--)+\\s*(@knitr|----+)(.*?)-*\\s*$", ns='knitr')
 tidyverse_style_with_comments_removed <- function() {
@@ -335,7 +335,6 @@ ribbons represent associated 95% credibility intervals.](../output/figures/Parti
 }
 ```
 
-
 ## TC50 {.tabset .tabset-pills}
 
 One measure of the time (age) to settlement competency could be the
@@ -591,6 +590,7 @@ A quick scan of all the MCMC and residual diagnostics suggests that:
 ```
 
 ```{r MCMCplots modelled Q2, results='asis', eval=TRUE, echo = FALSE}
+SPECIES <- sort(SPECIES)
 for (i in 1:length(SPECIES)) {
     SP <- speciesAbbrev %>% filter(Abbreviation == SPECIES[i]) %>% pull(Species) %>% unique()
     cat(paste0("\n### ", SP, " {.tabset .tabset-faded} \n"))
@@ -731,8 +731,12 @@ for (i in 1:length(SPECIES)) {
 ```
 ```{r partialCompilationPlot2, results='markdown', eval=FALSE}
 ```
+```{r partialCompilationPlot2Carly, results='markdown', eval=FALSE}
+```
    
 ```{r compilationPlotsQ2, results='asis', eval=TRUE, echo = FALSE}
+cat("### Mixed version\n\n")
+cat(paste0("![(#fig:CompilationQ2AreaMixed) Modelled cohort settlement probability associated with larval age (days) conditional on inducer treatment for each species. Solid lines represent posterior medians and ribbons represent associated 95% credibility intervals.](../output/figures/partialAreaCompilation_Carly.png) \n\n"))
 cat("### 4 column version\n\n")
 cat(paste0("![(#fig:CompilationQ2Area) Modelled cohort settlement probability associated with larval age (days) conditional on inducer treatment for each species. Solid lines represent posterior medians and ribbons represent associated 95% credibility intervals.](../output/figures/partialAreaCompilation_.png) \n\n"))
 cat('\n')
