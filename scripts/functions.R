@@ -381,8 +381,8 @@ partialPlot <- function(pred, species, T=NULL, limits = c('CCA','control','disc'
         scale_colour_manual('Inducer', breaks = names(treatment_palette),
                           values = treatment_palette, limits = limits) +
         scale_x_continuous('Larval age (days)') +
-        {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob. (P>',T,')'),25)) } + 
-        {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement prob'),25)) } + 
+        {if(!is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement competency prob. (P>',T,')'),30)) } + 
+        {if(is.null(T)) scale_y_continuous(str_wrap(paste0('Cohort settlement competency prob'),30)) } + 
         geom_line() +
         ggtitle(SP) +
         theme_classic()
@@ -452,7 +452,7 @@ partial_plot_compilations_new <- function(path, dat.mod, ncol = 3, dpi = 100,
         scale_colour_manual('Inducer', breaks = names(treatment_palette),
                           values = treatment_palette, limits = limits) +
         scale_x_continuous('Larval age (days)', limits = c(0, 20)) +
-        scale_y_continuous(paste0('Cohort settlement probability (P>',thresholdProp,')')) + 
+        scale_y_continuous(paste0('Cohort settlement competency probability (P>',thresholdProp,')')) + 
         geom_line() +
         geom_vline(data = ld50, aes(xintercept = LD50, colour = SpecificTreatment),
                    linetype = 'dashed', show.legend = FALSE) + 
@@ -636,7 +636,7 @@ partial_plot_compilations_Q2_Area <- function(path, dat.mod, ncol = 3, dpi = 100
         geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
         geom_line() +
         scale_x_continuous('Larval age (days)') +
-        scale_y_continuous('Cohort settlement probability') +
+        scale_y_continuous('Cohort settlement competency probability') +
         scale_fill_manual('Inducer', breaks = names(treatment_palette),
                           values = treatment_palette, limits = limits) +
         scale_colour_manual('Inducer', breaks = names(treatment_palette),
@@ -681,12 +681,39 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100
         dplyr::rename(Species = Species1) 
     
     ## limits = c('CCA','control','disc', 'rubble')
+    ## group.lookup <- tribble(
+    ##     ~Species, ~xmax, ~row, ~col,
+    ##     "Acropora intermedia", 25, 1, 1,
+    ##     "Acropora longicyathus", 25, 2, 1,
+    ##     "Acropora loripes", 25, 3, 1,
+    ##     "Acropora tenuis", 25, 4, 1, 
+    ##     "Goniastrea retiformis", 25, 5, 1,
+    ##     "Lobophyllia corymbosa", 25, 6, 1,
+    ##     "Lobophyllia hemprichii", 25, 7, 1,
+    ##     "Montipora aequituberculata", 25, 8, 1,
+    ##     "Platygyra daedalea", 25, 9, 1,
+    ##     "Porites cylindrica", 25, 10, 1,
+    ##     "Acropora austera", 40, 1, 2,
+    ##     "Acropora glauca", 40, 2, 2,
+    ##     "Acropora micropthalma", 40, 3, 2,
+    ##     "Acropora millepora", 40, 4, 2,
+    ##     "Acropora muricata", 40, 5, 2,
+    ##     "Acropora hyacinthus", 84, 6, 2,
+    ##     "Dipsastraea matthaii", 84, 7, 2,
+    ##     "Dipsastraea pallida", 84, 8, 2,
+    ##     "Mycedium elephantotus", 84, 9, 2,
+    ##     "Oulophyllia crispa", 84, 10, 2,
+    ##     "Diploastrea heliopora", 40, 1, 3,
+    ##     "Galaxea fascicularis", 40, 2, 3,
+    ##     "Montipora digitata", 40, 3, 3,
+    ##     "Porites lobata", 40, 4, 3,
+    ##     )
     group.lookup <- tribble(
         ~Species, ~xmax, ~row, ~col,
         "Acropora intermedia", 25, 1, 1,
         "Acropora longicyathus", 25, 2, 1,
         "Acropora loripes", 25, 3, 1,
-        "Acropora tenuis", 25, 4, 1,
+        "Acropora cf. kenti", 25, 4, 1,
         "Goniastrea retiformis", 25, 5, 1,
         "Lobophyllia corymbosa", 25, 6, 1,
         "Lobophyllia hemprichii", 25, 7, 1,
@@ -759,7 +786,7 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100
             geom_ribbon(aes(ymin = lower.HPD, ymax = upper.HPD), alpha = 0.3, colour = NA) +
             geom_line() +
             scale_x_continuous('Larval age (days)', limits = c(0, xmax), expand = c(0,0)) +
-            scale_y_continuous('Cohort settlement probability') +
+            scale_y_continuous('Cohort settlement competency probability') +
             ## scale_fill_discrete('Inducer', limits = limits) +
             ## scale_colour_discrete('Inducer', limits = limits) +
             scale_fill_manual('Inducer', breaks = names(treatment_palette),
@@ -797,7 +824,7 @@ partial_plot_compilations_Q2_Area_carly <- function(path, dat.mod, dpi = 100
     xaxisplot<-ggplot()+labs(x="Larval age (days)")+theme_classic(base_size = 15)+ 
         guides(x = "none", y = "none")
     gg1 <- gg/xaxisplot + plot_layout(heights = c(1000,1))        
-    yaxisplot<-ggplot()+labs(y="Cohort settlement probability")+theme_classic(base_size = 15)+ 
+    yaxisplot<-ggplot()+labs(y="Cohort settlement competency probability")+theme_classic(base_size = 15)+ 
         guides(x = "none", y = "none")
     gg2 <- yaxisplot + gg1 + plot_layout(widths= c(1,1000))        
 
@@ -937,7 +964,8 @@ partial_plot_compilations_Q2_Area_posteriors <- function(path, dat.mod, ncol = 3
                           values = treatment_palette, limits = limits) +
         scale_x_continuous('Cohort settlement threshold',
                            breaks = thress) +
-        scale_y_log10('Days to >0.5 settlement probability',
+        ## scale_y_log10('Days to >0.5 settlement probability',
+        scale_y_log10('Days to >0.5 probability of settlement competency',
                            expand = c(0,0)) + 
         facet_wrap(~Species, labeller = label_bquote(col = italic(.(Species))),
                    scales = 'free', ncol = ncol) +

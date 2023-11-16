@@ -2,6 +2,10 @@ source('functions.R')
 
 ## ----readSpeciesAbbrev
 speciesAbbrev <- read_csv(file = paste0(DATA_PATH, "primary/Species abbreviations.csv"), trim_ws = TRUE)
+speciesAbbrev <- speciesAbbrev %>%
+    mutate(Species = ifelse(Species == "Acropora tenuis",
+                            "Acropora cf. kenti",
+                            Species))
 save(speciesAbbrev, file = paste0(DATA_PATH, "processed/Species abbreviations.RData"))
 ## ----end
 
@@ -108,6 +112,9 @@ data %>% filter(Species == 'Agla',
 
 
 ## ---- EDA
+load(file = '../data/processed/data.RData')
+load(file = paste0(DATA_PATH, "processed/TreatmentOrder.RData"))
+load(file = paste0(DATA_PATH, "processed/TreatmentPalette.RData"))
 g <- data %>%
     mutate(SpecificTreatment = factor(SpecificTreatment,
                                       levels = TreatmentOrder)) %>%

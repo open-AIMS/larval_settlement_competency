@@ -226,7 +226,7 @@ source('functions.R')
                            scale_x_continuous('Cohort settlement threshold',
                                               breaks = thress) +
                            ## scale_y_continuous('Days to >0.5 settlement probability') +
-                           scale_y_continuous('Days to >0.5 settlement probability',
+                           scale_y_continuous('Days to >0.5 settlement competency probability',
                                               expand = c(0,0)) 
                            ## coord_cartesian(ylim = c(min(.$.lower), unique(.$MaxY)), clip = "off")
                        )
